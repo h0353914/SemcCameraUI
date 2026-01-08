@@ -1,0 +1,14 @@
+__pycache__/
+out/
+
+# ======================
+# Gradle / build outputs
+# ======================
+**/build/
+**/.gradle/
+
+# ======================
+# Magisk pack artifacts
+# ======================
+magisk_pack/build/
+.tmp/
