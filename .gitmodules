@@ -1,3 +1,6 @@
 [submodule "tools_Common/UiAgentService"]
 	path = tools_Common/UiAgentService
 	url = https://github.com/h0353914/UiAgentService
+[submodule "Libcacao"]
+	path = Libcacao
+	url = https://github.com/h0353914/libcacao_wrappers
