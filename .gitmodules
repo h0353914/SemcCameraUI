@@ -4,3 +4,19 @@
 [submodule "Libcacao"]
 	path = Libcacao
 	url = https://github.com/h0353914/libcacao_wrappers
+[submodule "App_smali/SemcCameraUI-xxhdpi"]
+	path = App_smali/SemcCameraUI-xxhdpi
+	url = https://github.com/h0353914/SemcCameraUI-xxhdpi-release
+	branch = 2.2.2.A.0.15_antoniu200
+[submodule "App_smali/SoundPhotoCamera-xhdpi"]
+	path = App_smali/SoundPhotoCamera-xhdpi
+	url = https://github.com/h0353914/SoundPhotoCamera-xhdpi-release
+	branch = 2.2.1.B.0.3_antoniu200
+[submodule "App_smali/CameraPanorama"]
+	path = App_smali/CameraPanorama
+	url = https://github.com/h0353914/CameraPanorama-release
+	branch = 2.3.1.B.0.6_antoniu200
+[submodule "App_smali/ArtFilterCamera-xhdpi"]
+	path = App_smali/ArtFilterCamera-xhdpi
+	url = https://github.com/h0353914/ArtFilterCamera-xhdpi-release
+	branch = 2.2.1.B.0.3_antoniu200
