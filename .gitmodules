@@ -20,3 +20,7 @@
 	path = App_smali/ArtFilterCamera-xhdpi
 	url = https://github.com/h0353914/ArtFilterCamera-xhdpi-release
 	branch = 2.2.1.B.0.3_antoniu200
+[submodule "App_java/SemcCameraUI-xxhdpi"]
+	path = App_java/SemcCameraUI-xxhdpi
+	url = https://github.com/h0353914/SemcCameraUI-xxhdpi-release
+	branch = 2.2.2.A.0.15_java
