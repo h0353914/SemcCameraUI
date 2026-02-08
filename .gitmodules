@@ -24,3 +24,6 @@
 	path = App_java/SemcCameraUI-xxhdpi
 	url = https://github.com/h0353914/SemcCameraUI-xxhdpi-release
 	branch = 2.2.2.A.0.15_java
+[submodule "sony_camera_magsik"]
+	path = sony_camera_magsik
+	url = https://github.com/h0353914/sony_camera_magsik
