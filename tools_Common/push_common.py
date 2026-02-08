@@ -37,9 +37,17 @@ def _run_adb_commands(adb: Adb, commands: list[list[str]]) -> None:
 
 
 def push(
-    local_source, remote_destination: str, *, adb: Adb | None = None, reboot=False
+    local_source: str | Path,
+    remote_destination: str,
+    *,
+    adb: Adb | None = None,
+    reboot=False,
+    device_serial: str | None = None,
 ):
-    adb_client = adb or DEFAULT_ADB
+    if device_serial:
+        adb_client = Adb(serial=device_serial)
+    else:
+        adb_client = adb or DEFAULT_ADB
     local_path = Path(local_source)
     if not local_path.exists():
         raise FileNotFoundError(f"{local_path} does not exist")
@@ -58,7 +66,7 @@ def push(
 
 
 def push_apk(
-    folder_name,
+    folder_name: str,
     force_stop_package: str | None = None,
     reboot=False,
     adb: Adb | None = None,
@@ -67,10 +75,14 @@ def push_apk(
     local_apk_path = PRIV_APP_DIR / folder_name / f"{folder_name}.apk"
     remote_path = f"{ADB_PRIV_APP_DIR}/{folder_name}/{folder_name}.apk"
 
-    adb_client = adb or DEFAULT_ADB
     if device_serial:
         adb_client = Adb(serial=device_serial)
-    push(local_apk_path, remote_path, adb=adb_client, reboot=reboot)
+    else:
+        adb_client = adb or DEFAULT_ADB
+
+    push(
+        local_apk_path, remote_path, adb=adb_client, reboot=reboot, device_serial=device_serial
+    )
 
     if force_stop_package:
         try:
@@ -88,19 +100,68 @@ def push_so(
     lib_name: str,
     arch: str = "lib64",
     *,
+    local_path: str | Path | None = None,
     remote_dir: str | None = None,
     reboot=False,
     adb: Adb | None = None,
+    device_serial: str | None = None,
 ):
-    adb_client = adb or DEFAULT_ADB
     if arch not in ("lib", "lib64"):
         raise ValueError("arch must be either 'lib' or 'lib64'")
 
-    local_path = OUT_SO_DIR / arch / lib_name
+    # 如果提供了自訂的 local_path，使用它；否則使用預設的 OUT_SO_DIR
+    if local_path is None:
+        local_path = OUT_SO_DIR / arch / lib_name
+    else:
+        local_path = Path(local_path)
+    
     if not local_path.exists():
         raise FileNotFoundError(f"{local_path} does not exist")
 
     remote_base = remote_dir or (ADB_LIB64_DIR if arch == "lib64" else ADB_LIB_DIR)
     remote_path = f"{remote_base.rstrip('/')}/{lib_name}"
 
-    push(local_path, remote_path, adb=adb_client, reboot=reboot)
+    push(local_path, remote_path, adb=adb, reboot=reboot, device_serial=device_serial)
+
+
+def copy_compiled_file(
+    source: str | Path,
+    destinations: str | Path | list[str | Path],
+    *,
+    create_dirs=True,
+):
+    """
+    複製編譯的檔案到一個或多個目的地位置。
+    
+    Args:
+        source: 原始檔案路徑
+        destinations: 目的地路徑，可以是單個路徑或路徑列表
+        create_dirs: 如果目的地目錄不存在，是否建立它們（預設為 True）
+    
+    Raises:
+        FileNotFoundError: 如果源檔案不存在
+    """
+    import shutil
+    
+    source_path = Path(source)
+    if not source_path.exists():
+        raise FileNotFoundError(f"{source_path} does not exist")
+    
+    if not isinstance(destinations, list):
+        destinations = [destinations]
+    
+    for dest in destinations:
+        dest_path = Path(dest)
+        
+        if create_dirs:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        print(f"Copying: {source_path} -> {dest_path}")
+        try:
+            if source_path.is_file():
+                shutil.copy2(source_path, dest_path)
+            else:
+                shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
+            print(f"Successfully copied to {dest_path}")
+        except Exception as exc:
+            print(f"Failed to copy to {dest_path}: {exc}")

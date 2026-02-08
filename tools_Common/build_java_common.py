@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import os
-import shutil
 import subprocess
 from pathlib import Path
 from typing import Iterable, Optional
@@ -145,24 +144,23 @@ def _sign_apk(
 def build_java_app(
     folder_name: str,
     source_dir: Optional[Path] = None,
-    output_dir: Optional[Path] = None,
     apk_output: Optional[Path] = None,
     build_task: str = ":app:assembleRelease",
     build_args: Optional[Iterable[str]] = None,
     build_executable: Optional[str] = None,
     env_overrides: Optional[dict[str, str]] = None,
     *,
-    # 你指定：編譯 > 簽名 > 複製到 out/priv-app/...；所以預設直接簽
     sign: bool = True,
     java_library_path: Optional[Path] = None,
     output_name: Optional[str] = None,
 ) -> Path:
     """
-    統一邏輯（以 out/priv-app 為 canonical）：
-      - 編譯
+    編譯並簽名 Java 應用：
+      - 執行 Gradle 編譯
       - 簽名（signapk，預設開）
-      - 複製到 out/priv-app/<output_name>/<output_name>.apk
-      - 若提供 output_dir，再複製一次到 <output_dir>/<output_name>/<output_name>.apk
+      - 返回簽名後的 APK 路徑
+    
+    注意：複製到目的地由調用者使用 copy_compiled_file 負責
     """
     if java_library_path is None:
         java_library_path = CONSCRYPT_LIB_DIR
@@ -172,13 +170,8 @@ def build_java_app(
     project_dir = source_dir.resolve()
 
     output_name_final = output_name or folder_name
-    
-    # canonical 位置：永遠 out/priv-app
-    canonical_dir = PRIV_APP_DIR / output_name_final
-    canonical_dir.mkdir(parents=True, exist_ok=True)
-    canonical_apk = canonical_dir / f"{output_name_final}.apk"
 
-    print(f"處理資料夾: {project_dir}\n輸出到 {canonical_apk}")
+    print(f"處理資料夾: {project_dir}\n編譯應用: {output_name_final}")
 
     gradle_cmd = [_resolve_gradle_executable(project_dir, build_executable), build_task]
     if build_args:
@@ -211,30 +204,23 @@ def build_java_app(
     print(f"編譯產物: {candidate_apk.name}")
     print(f"{'=' * 80}\n")
 
-    # 編譯 > 簽名 > 再複製到 canonical
+    # 編譯 > 簽名
     if sign:
-        tmp_signed = canonical_apk.with_suffix(".apk.signed.tmp")
+        import tempfile
+        tmp_signed = Path(tempfile.gettempdir()) / f"{output_name_final}_signed.apk"
         _sign_apk(
             candidate_apk,
             tmp_signed,
             java_library_path=java_library_path,
         )
-        shutil.move(str(tmp_signed), str(canonical_apk))
-        print(f"✓ 已簽名 APK (canonical): {canonical_apk}\n")
+        signed_apk = tmp_signed
+        print(f"✓ 已簽名 APK: {signed_apk}\n")
     else:
-        shutil.copy2(candidate_apk, canonical_apk)
-        print(f"✓ Java APK 編譯完成（未簽名）: {canonical_apk}\n")
-
-    # output_dir：額外 copy 一份（跟 smali common 行為一致）
-    if output_dir:
-        copy_dir = Path(output_dir) / output_name_final
-        copy_dir.mkdir(parents=True, exist_ok=True)
-        copied_apk = copy_dir / f"{output_name_final}.apk"
-        shutil.copy2(canonical_apk, copied_apk)
-        print(f"✓ 複製 APK 到 {copied_apk}\n")
+        signed_apk = candidate_apk
+        print(f"✓ Java APK 編譯完成（未簽名）: {signed_apk}\n")
 
     print(f"{'=' * 80}")
     print(f"✓ 完成: {folder_name}")
     print(f"{'=' * 80}\n")
 
-    return canonical_apk
+    return signed_apk
