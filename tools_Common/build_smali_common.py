@@ -27,7 +27,6 @@ class ApktoolBuildError(RuntimeError):
 
 def build_smali_app(
     folder_name: str,
-    output_dir: Path | None = None,
     source_folder_name: str | None = None,
     output_name: str | None = None,
 ) -> Path:
@@ -50,13 +49,6 @@ def build_smali_app(
             stdout=result.stdout or "",
             stderr=result.stderr or "",
         )
-
-    if output_dir:
-        copy_dir = Path(output_dir) / output_name_final
-        copy_dir.mkdir(parents=True, exist_ok=True)
-        copied_apk = copy_dir / f"{output_name_final}.apk"
-        shutil.copy2(output_apk, copied_apk)
-        print(f"複製 APK 到 {copied_apk}")
 
     print(f"apktool 打包完成: {output_apk}")
     return output_apk

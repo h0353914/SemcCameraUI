@@ -10,21 +10,14 @@ from pathlib import Path
 SEMCCAMERA_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SEMCCAMERA_ROOT))
 
-from tools_Common.push_common import push_so
+from tools_Common.push_common import push_so, copy_compiled_file  # noqa: E402
 
 LINEAGE_ROOT = Path.home() / "lineageos"
 LUNCH_TARGET = "lineage_poplar_kddi-ap2a-userdebug"
 PRODUCT_NAME = "poplar_kddi"
 
-# 你要從 Soong out/system/lib* 拿到的 wrapper 產物檔名
-WRAPPER_SOS = [
-    "libcacao_client.so",
-    "libcacao_service.so",
-    "libimageprocessorjni.so",
-    "libcacao_process_ctrl_gateway.so",
-]
-
-# module name（不含 .so）
+# ── Soong 模組名稱（不含 .so） ──
+# 前 4 個是 wrapper（由本專案 C++ 原始碼編譯），後 4 個是 prebuilt _real.so
 WRAPPER_MODULES = [
     "libcacao_client",
     "libcacao_service",
@@ -32,104 +25,108 @@ WRAPPER_MODULES = [
     "libcacao_process_ctrl_gateway",
     "libcacao_client_real",
     "libcacao_service_real",
+    "libimageprocessorjni_real",
     "libcacao_process_ctrl_gateway_real",
 ]
 
 
 def run_bash(cmd: str, cwd: Path) -> None:
+    """在 bash -l 中執行命令，失敗時拋出異常"""
     print(f"\n[RUN] cwd={cwd}\n{cmd}\n")
     subprocess.run(["bash", "-lc", cmd], cwd=str(cwd), check=True)
 
 
-def ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
-
-
-def copy_file(src: Path, dst: Path) -> None:
-    ensure_dir(dst.parent)
-    shutil.copy2(src, dst)
-    print(f"[COPY] {src} -> {dst}")
-
-
 def copy_glob(src_dir: Path, pattern: str, dst_dir: Path) -> int:
+    """複製符合 pattern 的檔案到目錄。"""
     if not src_dir.exists():
         return 0
-    ensure_dir(dst_dir)
-    n = 0
-    for p in sorted(src_dir.glob(pattern)):
-        if p.is_file():
-            copy_file(p, dst_dir / p.name)
-            n += 1
-    return n
+    files = [p for p in sorted(src_dir.glob(pattern)) if p.is_file()]
+    for f in files:
+        copy_compiled_file(f, dst_dir / f.name)
+    return len(files)
 
 
-def push_staged_libs(out_root: Path) -> None:
-    so_root = out_root / "so"
-    if not so_root.exists():
-        print(f"[WARN] staged library directory missing: {so_root}")
-        return
+def push_staged_libs(out_root: Path, device_serial: str | None = None) -> None:
+    """推送 staged 的 .so 到設備 /system/lib{,64}/"""
     for arch in ("lib64", "lib"):
-        arch_dir = so_root / arch
+        arch_dir = out_root / arch
         if not arch_dir.exists():
-            print(f"[WARN] no staged {arch} directory at {arch_dir}")
+            print(f"[WARN] staged {arch} 目錄不存在: {arch_dir}")
             continue
         libs = sorted(p for p in arch_dir.glob("*.so") if p.is_file())
         if not libs:
-            print(f"[WARN] staged {arch} directory is empty: {arch_dir}")
+            print(f"[WARN] staged {arch} 目錄是空的: {arch_dir}")
             continue
         for lib_path in libs:
             print(f"[PUSH] {arch}/{lib_path.name}")
             try:
-                push_so(lib_path.name, arch=arch)
-            except Exception as exc:  # pragma: no cover - best effort push
-                print(f"[WARN] failed to push {lib_path.name}: {exc}")
+                push_so(lib_path.name, arch=arch, local_path=lib_path, device_serial=device_serial)
+            except Exception as exc:
+                print(f"[WARN] 推送 {lib_path.name} 失敗: {exc}")
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(
-        description="Soong build Libcacao wrappers and stage wrappers + *_real.so into SemcCameraApp/out"
+        description="Soong 編譯 Libcacao wrapper 並部署到設備。\n"
+                    "切換 git 分支後建議加 --clean 避免 Soong 快取問題。",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     ap.add_argument(
         "-b",
         "--build",
         action="store_true",
-        help="Only stage the Libcacao wrappers",
+        help="只執行編譯 + 複製（不推送到設備）",
     )
     ap.add_argument(
         "-p",
         "--push",
         action="store_true",
-        help="Only push the staged libraries to the device",
+        help="只推送已 staged 的 .so 到設備（不重新編譯）",
     )
     ap.add_argument(
+        "-s",
         "--skip-build",
         action="store_true",
         help="只複製，不呼叫 Soong build",
     )
     ap.add_argument("--jobs", type=int, default=0, help="m -jN（0 = 讓 m 自己決定）")
+    ap.add_argument(
+        "-d",
+        "--device",
+        type=str,
+        help="指定設備序號",
+    )
     args = ap.parse_args()
+
+    # 預設行為：同時 build + push；指定 -b/-p 則只執行對應步驟
     do_build = args.build or not (args.build or args.push)
     do_push = args.push or not (args.build or args.push)
+
     repo_root = Path(__file__).resolve().parents[1]
     out_root = repo_root / "out"
     libcacao_root = repo_root / "Libcacao"
-    preb32 = libcacao_root / "prebuilts" / "lib"
-    preb64 = libcacao_root / "prebuilts" / "lib64"
     product_out = LINEAGE_ROOT / "out" / "target" / "product" / PRODUCT_NAME
+    
     if not product_out.exists():
         raise SystemExit(f"[ERR] 找不到 product out：{product_out}")
-    sys64 = product_out / "system" / "lib64"
-    sys32 = product_out / "system" / "lib"
-    out_so64 = out_root / "so" / "lib64"
-    out_so32 = out_root / "so" / "lib"
-    print("[INFO] LINEAGE_ROOT =", LINEAGE_ROOT)
-    print("[INFO] LUNCH        =", LUNCH_TARGET)
-    print("[INFO] PRODUCT      =", PRODUCT_NAME)
-    print("[INFO] product_out  =", product_out)
-    print("[INFO] repo_root    =", repo_root)
-    print("[INFO] out_root     =", out_root)
-    print("[INFO] sys64        =", sys64)
-    print("[INFO] sys32        =", sys32)
+
+    # ── 路徑配置 ──
+    paths = {
+        "sys64": product_out / "system" / "lib64",    # Soong 編譯產出 (64-bit)
+        "sys32": product_out / "system" / "lib",      # Soong 編譯產出 (32-bit)
+        "out64": out_root / "lib64",                   # 本地 staged 目錄 (64-bit)
+        "out32": out_root / "lib",                     # 本地 staged 目錄 (32-bit)
+        "preb64": libcacao_root / "prebuilts" / "lib64",  # prebuilt _real.so (64-bit)
+        "preb32": libcacao_root / "prebuilts" / "lib",    # prebuilt _real.so (32-bit)
+    }
+
+    print(f"[INFO] LINEAGE_ROOT = {LINEAGE_ROOT}")
+    print(f"[INFO] LUNCH        = {LUNCH_TARGET}")
+    print(f"[INFO] PRODUCT      = {PRODUCT_NAME}")
+    print(f"[INFO] product_out  = {product_out}")
+    print(f"[INFO] repo_root    = {repo_root}")
+    print(f"[INFO] out_root     = {out_root}")
+
     if do_build:
         if not args.skip_build:
             modules = " ".join(WRAPPER_MODULES)
@@ -144,37 +141,33 @@ def main() -> int:
             """.strip(),
                 cwd=LINEAGE_ROOT,
             )
-        ensure_dir(out_so64)
-        ensure_dir(out_so32)
-        if not sys64.exists():
-            print(f"[WARN] 找不到 system/lib64：{sys64}")
-        if not sys32.exists():
-            print(f"[WARN] 找不到 system/lib：{sys32}")
-        for so in WRAPPER_SOS:
-            src64 = sys64 / so
-            if src64.exists():
-                copy_file(src64, out_so64 / so)
+
+        # ── 複製 wrapper / _real .so 到 staged 目錄 ──
+        for module in WRAPPER_MODULES:
+            so = module + ".so"
+            if "_real" in module:
+                # _real 檔案從 prebuilts 複製（不需要 Soong 編譯）
+                src_keys = [("64-bit", "preb64", "out64"), ("32-bit", "preb32", "out32")]
             else:
-                print(f"[WARN] 缺少 64-bit wrapper（只查 system/lib64）：{src64}")
-            src32 = sys32 / so
-            if src32.exists():
-                copy_file(src32, out_so32 / so)
-            else:
-                print(f"[WARN] 缺少 32-bit wrapper（只查 system/lib）：{src32}")
-        n64 = copy_glob(preb64, "*_real.so", out_so64)
-        n32 = copy_glob(preb32, "*_real.so", out_so32)
-        print(f"[REAL] copied: 64-bit={n64}, 32-bit={n32}")
-        if n64 == 0:
-            print(f"[WARN] prebuilts/lib64 沒有 *_real.so：{preb64}")
-        if n32 == 0:
-            print(f"[WARN] prebuilts/lib 沒有 *_real.so：{preb32}")
-        print("\n[DONE] staged to", out_root)
-        print("       64-bit:", out_so64)
-        print("       32-bit:", out_so32)
+                # wrapper 檔案從 Soong 編譯產出複製
+                src_keys = [("64-bit", "sys64", "out64"), ("32-bit", "sys32", "out32")]
+            
+            for arch, src_key, out_key in src_keys:
+                src = paths[src_key] / so
+                if src.exists():
+                    copy_compiled_file(src, paths[out_key] / so)
+                else:
+                    print(f"[WARN] 缺少 {arch} {module}：{src}")
+
+        print(f"\n[DONE] staged 至 {out_root}")
+        print(f"       64-bit: {paths['out64']}")
+        print(f"       32-bit: {paths['out32']}")
     else:
-        print("[INFO] Skipping build/stage step")
+        print("[INFO] 跳過 build/stage 步驟")
+
     if do_push:
-        push_staged_libs(out_root)
+        push_staged_libs(out_root, device_serial=args.device)
+
     return 0
 
 

@@ -164,7 +164,7 @@ def parse_args() -> argparse.Namespace:
         type=mode_mapping,  # argparse 會對傳入的每個值執行此函式
         nargs="+",  # 關鍵：允許輸入多個值，結果會存為 list
         choices=["photo", "video", "slow_motion", "test_t"],
-        default=["photo", "video"],
+        default=["photo", "video", "slow_motion"],
         help="測試模式 (可多選): photo (p), video (v), slow_motion (s) (預設: photo video)",
     )
     return parser.parse_args()
