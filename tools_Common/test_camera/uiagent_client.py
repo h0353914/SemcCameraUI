@@ -368,6 +368,7 @@ def wait_then_click(
         print(f"點擊{wait_target.key_name} {click(click_target)}")
         return True
     print(f"點擊{wait_target.key_name} 失敗...")
+    return False
 
 
 def click_if_exists(click_target: ClickTarget) -> bool:
