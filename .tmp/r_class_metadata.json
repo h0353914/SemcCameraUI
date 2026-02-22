@@ -1,0 +1,1809 @@
+{
+  "android/support/coreui/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$color": {
+    "source": "R.java",
+    "init_line": 33,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$dimen": {
+    "source": "R.java",
+    "init_line": 39,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$styleable": {
+    "source": "R.java",
+    "init_line": 138,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      139,
+      143,
+      146,
+      154,
+      161,
+      172,
+      185
+    ]
+  },
+  "android/support/coreui/R$string": {
+    "source": "R.java",
+    "init_line": 125,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$style": {
+    "source": "R.java",
+    "init_line": 128,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$drawable": {
+    "source": "R.java",
+    "init_line": 63,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$id": {
+    "source": "R.java",
+    "init_line": 77,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$integer": {
+    "source": "R.java",
+    "init_line": 114,
+    "init_access": "public"
+  },
+  "android/support/coreui/R$layout": {
+    "source": "R.java",
+    "init_line": 117,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/drawerlayout/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/drawerlayout/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$color": {
+    "source": "R.java",
+    "init_line": 33,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$dimen": {
+    "source": "R.java",
+    "init_line": 39,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$styleable": {
+    "source": "R.java",
+    "init_line": 138,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      139,
+      143,
+      146,
+      154,
+      161,
+      172,
+      185
+    ]
+  },
+  "android/support/graphics/drawable/R$string": {
+    "source": "R.java",
+    "init_line": 125,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$style": {
+    "source": "R.java",
+    "init_line": 128,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$drawable": {
+    "source": "R.java",
+    "init_line": 63,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$id": {
+    "source": "R.java",
+    "init_line": 77,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$integer": {
+    "source": "R.java",
+    "init_line": 114,
+    "init_access": "public"
+  },
+  "android/support/graphics/drawable/R$layout": {
+    "source": "R.java",
+    "init_line": 117,
+    "init_access": "public"
+  },
+  "android/support/print/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/interpolator/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v4/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v4/R$color": {
+    "source": "R.java",
+    "init_line": 33,
+    "init_access": "public"
+  },
+  "android/support/v4/R$dimen": {
+    "source": "R.java",
+    "init_line": 42,
+    "init_access": "public"
+  },
+  "android/support/v4/R$styleable": {
+    "source": "R.java",
+    "init_line": 165,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      166,
+      170,
+      173,
+      181,
+      188,
+      199,
+      212
+    ]
+  },
+  "android/support/v4/R$string": {
+    "source": "R.java",
+    "init_line": 147,
+    "init_access": "public"
+  },
+  "android/support/v4/R$style": {
+    "source": "R.java",
+    "init_line": 150,
+    "init_access": "public"
+  },
+  "android/support/v4/R$drawable": {
+    "source": "R.java",
+    "init_line": 70,
+    "init_access": "public"
+  },
+  "android/support/v4/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/v4/R$id": {
+    "source": "R.java",
+    "init_line": 84,
+    "init_access": "public"
+  },
+  "android/support/v4/R$integer": {
+    "source": "R.java",
+    "init_line": 126,
+    "init_access": "public"
+  },
+  "android/support/v4/R$layout": {
+    "source": "R.java",
+    "init_line": 130,
+    "init_access": "public"
+  },
+  "android/support/cursoradapter/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/asynclayoutinflater/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/asynclayoutinflater/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/customview/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/customview/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/customview/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/customview/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/customview/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/customview/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/customview/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/customview/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/customview/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/customview/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/customview/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/localbroadcastmanager/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/documentfile/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/swiperefreshlayout/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/swiperefreshlayout/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/slidingpanelayout/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/slidingpanelayout/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$dimen": {
+    "source": "R.java",
+    "init_line": 33,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$styleable": {
+    "source": "R.java",
+    "init_line": 148,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      149,
+      153,
+      160,
+      171,
+      184
+    ]
+  },
+  "android/support/mediacompat/R$string": {
+    "source": "R.java",
+    "init_line": 131,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$style": {
+    "source": "R.java",
+    "init_line": 134,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$drawable": {
+    "source": "R.java",
+    "init_line": 61,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$id": {
+    "source": "R.java",
+    "init_line": 75,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$integer": {
+    "source": "R.java",
+    "init_line": 110,
+    "init_access": "public"
+  },
+  "android/support/mediacompat/R$layout": {
+    "source": "R.java",
+    "init_line": 114,
+    "init_access": "public"
+  },
+  "android/support/compat/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/compat/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/compat/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/compat/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/compat/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/compat/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/compat/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/compat/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/compat/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/compat/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/compat/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/coreutils/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/coreutils/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/v7/viewpager/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/v7/viewpager/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$color": {
+    "source": "R.java",
+    "init_line": 374,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$bool": {
+    "source": "R.java",
+    "init_line": 368,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$dimen": {
+    "source": "R.java",
+    "init_line": 461,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$anim": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$styleable": {
+    "source": "R.java",
+    "init_line": 1295,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      1296,
+      1326,
+      1328,
+      1330,
+      1331,
+      1338,
+      1341,
+      1350,
+      1357,
+      1360,
+      1365,
+      1370,
+      1375,
+      1383,
+      1395,
+      1517,
+      1520,
+      1522,
+      1529,
+      1533,
+      1537,
+      1540,
+      1548,
+      1561,
+      1570,
+      1577,
+      1588,
+      1601,
+      1604,
+      1614,
+      1619,
+      1622,
+      1627,
+      1634,
+      1658,
+      1668,
+      1673,
+      1677,
+      1679,
+      1715,
+      1720,
+      1725,
+      1729,
+      1734,
+      1758,
+      1761,
+      1773,
+      1791,
+      1798,
+      1804,
+      1811,
+      1813,
+      1828,
+      1839,
+      1850,
+      1864,
+      1894,
+      1900,
+      1904
+    ]
+  },
+  "android/support/v7/preference/R$string": {
+    "source": "R.java",
+    "init_line": 869,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$style": {
+    "source": "R.java",
+    "init_line": 916,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$drawable": {
+    "source": "R.java",
+    "init_line": 589,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$attr": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$id": {
+    "source": "R.java",
+    "init_line": 691,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$integer": {
+    "source": "R.java",
+    "init_line": 805,
+    "init_access": "public"
+  },
+  "android/support/v7/preference/R$layout": {
+    "source": "R.java",
+    "init_line": 812,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$color": {
+    "source": "R.java",
+    "init_line": 303,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$bool": {
+    "source": "R.java",
+    "init_line": 298,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$dimen": {
+    "source": "R.java",
+    "init_line": 389,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$anim": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$styleable": {
+    "source": "R.java",
+    "init_line": 1150,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      1151,
+      1181,
+      1183,
+      1185,
+      1186,
+      1193,
+      1196,
+      1205,
+      1212,
+      1215,
+      1220,
+      1225,
+      1230,
+      1238,
+      1250,
+      1372,
+      1374,
+      1378,
+      1382,
+      1385,
+      1393,
+      1402,
+      1409,
+      1420,
+      1433,
+      1436,
+      1446,
+      1451,
+      1454,
+      1461,
+      1485,
+      1495,
+      1499,
+      1501,
+      1504,
+      1522,
+      1528,
+      1535,
+      1537,
+      1552,
+      1566,
+      1596,
+      1602,
+      1606
+    ]
+  },
+  "android/support/v7/appcompat/R$string": {
+    "source": "R.java",
+    "init_line": 759,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$style": {
+    "source": "R.java",
+    "init_line": 802,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$drawable": {
+    "source": "R.java",
+    "init_line": 505,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$attr": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$id": {
+    "source": "R.java",
+    "init_line": 605,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$integer": {
+    "source": "R.java",
+    "init_line": 712,
+    "init_access": "public"
+  },
+  "android/support/v7/appcompat/R$layout": {
+    "source": "R.java",
+    "init_line": 719,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$color": {
+    "source": "R.java",
+    "init_line": 42,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$dimen": {
+    "source": "R.java",
+    "init_line": 48,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$styleable": {
+    "source": "R.java",
+    "init_line": 154,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      155,
+      159,
+      162,
+      170,
+      177,
+      188,
+      201,
+      204
+    ]
+  },
+  "android/support/v7/recyclerview/R$string": {
+    "source": "R.java",
+    "init_line": 141,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$style": {
+    "source": "R.java",
+    "init_line": 144,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$drawable": {
+    "source": "R.java",
+    "init_line": 78,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$id": {
+    "source": "R.java",
+    "init_line": 92,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$integer": {
+    "source": "R.java",
+    "init_line": 130,
+    "init_access": "public"
+  },
+  "android/support/v7/recyclerview/R$layout": {
+    "source": "R.java",
+    "init_line": 133,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$color": {
+    "source": "R.java",
+    "init_line": 374,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$bool": {
+    "source": "R.java",
+    "init_line": 368,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$dimen": {
+    "source": "R.java",
+    "init_line": 461,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$anim": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$styleable": {
+    "source": "R.java",
+    "init_line": 1295,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      1296,
+      1326,
+      1328,
+      1330,
+      1331,
+      1338,
+      1341,
+      1350,
+      1357,
+      1360,
+      1365,
+      1370,
+      1375,
+      1383,
+      1395,
+      1517,
+      1520,
+      1522,
+      1529,
+      1533,
+      1537,
+      1540,
+      1548,
+      1561,
+      1570,
+      1577,
+      1588,
+      1601,
+      1604,
+      1614,
+      1619,
+      1622,
+      1627,
+      1634,
+      1658,
+      1668,
+      1673,
+      1677,
+      1679,
+      1715,
+      1720,
+      1725,
+      1729,
+      1734,
+      1758,
+      1761,
+      1773,
+      1791,
+      1798,
+      1804,
+      1811,
+      1813,
+      1828,
+      1839,
+      1850,
+      1864,
+      1894,
+      1900,
+      1904
+    ]
+  },
+  "android/support/v14/preference/R$string": {
+    "source": "R.java",
+    "init_line": 869,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$style": {
+    "source": "R.java",
+    "init_line": 916,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$drawable": {
+    "source": "R.java",
+    "init_line": 589,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$attr": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$id": {
+    "source": "R.java",
+    "init_line": 691,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$integer": {
+    "source": "R.java",
+    "init_line": 805,
+    "init_access": "public"
+  },
+  "android/support/v14/preference/R$layout": {
+    "source": "R.java",
+    "init_line": 812,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$color": {
+    "source": "R.java",
+    "init_line": 33,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$dimen": {
+    "source": "R.java",
+    "init_line": 39,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$styleable": {
+    "source": "R.java",
+    "init_line": 138,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      139,
+      143,
+      146,
+      154,
+      161,
+      172,
+      185
+    ]
+  },
+  "android/support/coordinatorlayout/R$string": {
+    "source": "R.java",
+    "init_line": 125,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$style": {
+    "source": "R.java",
+    "init_line": 128,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$drawable": {
+    "source": "R.java",
+    "init_line": 63,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$id": {
+    "source": "R.java",
+    "init_line": 77,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$integer": {
+    "source": "R.java",
+    "init_line": 114,
+    "init_access": "public"
+  },
+  "android/support/coordinatorlayout/R$layout": {
+    "source": "R.java",
+    "init_line": 117,
+    "init_access": "public"
+  },
+  "android/support/fragment/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$color": {
+    "source": "R.java",
+    "init_line": 33,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$dimen": {
+    "source": "R.java",
+    "init_line": 39,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$styleable": {
+    "source": "R.java",
+    "init_line": 138,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      139,
+      143,
+      146,
+      154,
+      161,
+      172,
+      185
+    ]
+  },
+  "android/support/fragment/R$string": {
+    "source": "R.java",
+    "init_line": 125,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$style": {
+    "source": "R.java",
+    "init_line": 128,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$drawable": {
+    "source": "R.java",
+    "init_line": 63,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$id": {
+    "source": "R.java",
+    "init_line": 77,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$integer": {
+    "source": "R.java",
+    "init_line": 114,
+    "init_access": "public"
+  },
+  "android/support/fragment/R$layout": {
+    "source": "R.java",
+    "init_line": 117,
+    "init_access": "public"
+  },
+  "android/support/loader/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/support/loader/R$color": {
+    "source": "R.java",
+    "init_line": 24,
+    "init_access": "public"
+  },
+  "android/support/loader/R$dimen": {
+    "source": "R.java",
+    "init_line": 30,
+    "init_access": "public"
+  },
+  "android/support/loader/R$styleable": {
+    "source": "R.java",
+    "init_line": 121,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      122,
+      126,
+      133,
+      144,
+      157
+    ]
+  },
+  "android/support/loader/R$string": {
+    "source": "R.java",
+    "init_line": 109,
+    "init_access": "public"
+  },
+  "android/support/loader/R$style": {
+    "source": "R.java",
+    "init_line": 112,
+    "init_access": "public"
+  },
+  "android/support/loader/R$drawable": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "android/support/loader/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "android/support/loader/R$id": {
+    "source": "R.java",
+    "init_line": 68,
+    "init_access": "public"
+  },
+  "android/support/loader/R$integer": {
+    "source": "R.java",
+    "init_line": 98,
+    "init_access": "public"
+  },
+  "android/support/loader/R$layout": {
+    "source": "R.java",
+    "init_line": 101,
+    "init_access": "public"
+  },
+  "android/arch/core/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/arch/lifecycle/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/arch/lifecycle/livedata/core/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "android/arch/lifecycle/viewmodel/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$menu": {
+    "source": "R.java",
+    "init_line": 4796,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$color": {
+    "source": "R.java",
+    "init_line": 2634,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$bool": {
+    "source": "R.java",
+    "init_line": 2621,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$array": {
+    "source": "R.java",
+    "init_line": 54,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$dimen": {
+    "source": "R.java",
+    "init_line": 2765,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$anim": {
+    "source": "R.java",
+    "init_line": 11,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$styleable": {
+    "source": "R.java",
+    "init_line": 6116,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      6184,
+      6579,
+      6622,
+      6638,
+      6661,
+      6754,
+      6804,
+      6924,
+      6999,
+      7043,
+      7109,
+      7188,
+      7270,
+      7407,
+      7806,
+      9347,
+      9385,
+      9419,
+      9498,
+      9545,
+      9605,
+      9658,
+      9829,
+      9987,
+      10111,
+      10220,
+      10372,
+      10540,
+      10590,
+      10740,
+      10840,
+      10886,
+      10952,
+      11013,
+      11150,
+      11473,
+      11604,
+      11670,
+      11721,
+      11813,
+      12217,
+      12287,
+      12355,
+      12404,
+      12514,
+      12812,
+      12872,
+      13052,
+      13340,
+      13414,
+      13446,
+      13545,
+      13618,
+      13670,
+      13884,
+      14018,
+      14158,
+      14398,
+      14799,
+      14886,
+      14951
+    ]
+  },
+  "com/sonyericsson/android/camera/R$xml": {
+    "source": "R.java",
+    "init_line": 14991,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$string": {
+    "source": "R.java",
+    "init_line": 4827,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$interpolator": {
+    "source": "R.java",
+    "init_line": 4623,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$animator": {
+    "source": "R.java",
+    "init_line": 49,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$style": {
+    "source": "R.java",
+    "init_line": 5704,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$drawable": {
+    "source": "R.java",
+    "init_line": 3322,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$attr": {
+    "source": "R.java",
+    "init_line": 77,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$id": {
+    "source": "R.java",
+    "init_line": 4150,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$integer": {
+    "source": "R.java",
+    "init_line": 4598,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$layout": {
+    "source": "R.java",
+    "init_line": 4627,
+    "init_access": "public"
+  },
+  "com/sonyericsson/android/camera/R$raw": {
+    "source": "R.java",
+    "init_line": 4800,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$color": {
+    "source": "R.java",
+    "init_line": 284,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$bool": {
+    "source": "R.java",
+    "init_line": 279,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$dimen": {
+    "source": "R.java",
+    "init_line": 369,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$anim": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$styleable": {
+    "source": "R.java",
+    "init_line": 1137,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      1138,
+      1168,
+      1170,
+      1172,
+      1173,
+      1180,
+      1183,
+      1192,
+      1197,
+      1202,
+      1210,
+      1222,
+      1344,
+      1346,
+      1350,
+      1354,
+      1363,
+      1370,
+      1381,
+      1391,
+      1396,
+      1399,
+      1406,
+      1430,
+      1440,
+      1444,
+      1446,
+      1449,
+      1467,
+      1473,
+      1488,
+      1502,
+      1532,
+      1538,
+      1542
+    ]
+  },
+  "com/sonyericsson/album/fastview/R$string": {
+    "source": "R.java",
+    "init_line": 757,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$style": {
+    "source": "R.java",
+    "init_line": 790,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$drawable": {
+    "source": "R.java",
+    "init_line": 481,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$attr": {
+    "source": "R.java",
+    "init_line": 22,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$id": {
+    "source": "R.java",
+    "init_line": 580,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$integer": {
+    "source": "R.java",
+    "init_line": 703,
+    "init_access": "public"
+  },
+  "com/sonyericsson/album/fastview/R$layout": {
+    "source": "R.java",
+    "init_line": 710,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R$color": {
+    "source": "R.java",
+    "init_line": 15,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R$styleable": {
+    "source": "R.java",
+    "init_line": 103,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      104
+    ]
+  },
+  "com/google/android/gms/R$string": {
+    "source": "R.java",
+    "init_line": 67,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R$drawable": {
+    "source": "R.java",
+    "init_line": 29,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R$id": {
+    "source": "R.java",
+    "init_line": 57,
+    "init_access": "public"
+  },
+  "com/google/android/gms/R$integer": {
+    "source": "R.java",
+    "init_line": 64,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R$color": {
+    "source": "R.java",
+    "init_line": 15,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R$styleable": {
+    "source": "R.java",
+    "init_line": 103,
+    "init_access": "public",
+    "clinit_access": "package",
+    "clinit_lines": [
+      104
+    ]
+  },
+  "com/google/android/gms/base/R$string": {
+    "source": "R.java",
+    "init_line": 67,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R$drawable": {
+    "source": "R.java",
+    "init_line": 29,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R$attr": {
+    "source": "R.java",
+    "init_line": 10,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R$id": {
+    "source": "R.java",
+    "init_line": 57,
+    "init_access": "public"
+  },
+  "com/google/android/gms/base/R$integer": {
+    "source": "R.java",
+    "init_line": 64,
+    "init_access": "public"
+  },
+  "com/duolingo/open/rtlviewpager/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/sonymobile/media/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/sonymobile/xperiaxloops/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "com/sonymobile/sidetouchgesturedetector/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  },
+  "androidx/versionedparcelable/R": {
+    "source": "R.java",
+    "init_line": 9,
+    "init_access": "public"
+  }
+}
