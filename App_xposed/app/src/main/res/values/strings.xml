@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Sony Camera Signature Bypass</string>
+    <string name="xposed_description">繞過 Sony 相機 (com.sonyericsson.android.camera) 簽名檢查\n只針對 Sony 相機，不影響其他應用</string>
+    
+    <string-array name="xposed_scope">
+        <item>android</item>
+    </string-array>
+</resources>

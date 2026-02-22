@@ -261,7 +261,7 @@ def test_video(click_map) -> None:
     # 第一次錄影
     print("開始第一次錄影...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)  # 開始錄影
-    time.sleep(10)
+    time.sleep(7)
     print("停止第一次錄影...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=3000)  # 停止錄影
     time.sleep(3)
@@ -272,7 +272,7 @@ def test_video(click_map) -> None:
     # 第二次錄影（測試是否卡住）
     print("開始第二次錄影...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)  # 開始錄影
-    time.sleep(10)
+    time.sleep(3)
     print("停止第二次錄影...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=3000)  # 停止錄影
     result2 = has_saved(timeout_ms=3000)
