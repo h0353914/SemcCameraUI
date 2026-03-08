@@ -189,6 +189,17 @@ def wait_exists_rid_content_desc(
     return bool(resp.get("exists", False))
 
 
+def wait_exists_rid_text(rid: str, text: str, timeout_ms: int = 1200) -> bool:
+    """等待 rid + text 元件出現，直到超時"""
+    resp = _broadcast(
+        cmd="wait_exists_rid_text",
+        rid=rid,
+        text=text,
+        timeout_ms=timeout_ms,
+    )
+    return bool(resp.get("exists", False))
+
+
 def click_text(text: str) -> bool:
     """觸發 text 所對應元件的點擊事件"""
     resp = _broadcast(cmd="click_text", text=text)
@@ -337,6 +348,11 @@ def wait_exists(target: ClickTarget, timeout_ms: int = 3000) -> bool:
         return wait_exists_rid_content_desc(
             target.resource_id, target.content_desc, timeout_ms=timeout_ms
         )
+    if target.resource_id and target.text:
+        return wait_exists_rid_text(
+            target.resource_id, target.text, timeout_ms=timeout_ms
+        )
+
     if target.resource_id:
         return wait_exists_rid(target.resource_id, timeout_ms=timeout_ms)
     # 目前 UiAgent 尚未提供 wait_exists_text，若有需要需在 Service 補上
@@ -368,6 +384,7 @@ def wait_then_click(
         print(f"點擊{wait_target.key_name} {click(click_target)}")
         return True
     print(f"點擊{wait_target.key_name} 失敗...")
+    return False
 
 
 def click_if_exists(click_target: ClickTarget) -> bool:

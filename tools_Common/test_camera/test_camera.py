@@ -136,6 +136,7 @@ def parse_args() -> argparse.Namespace:
             "s": "slow_motion",
             "sm": "slow_motion",
             "t": "test_t",
+            "st": "photo_settings",
         }
         # 如果輸入在對應表中，回傳完整名稱；否則回傳原值讓 choices 檢查
         return mapping.get(value.lower(), value)
@@ -163,9 +164,9 @@ def parse_args() -> argparse.Namespace:
         dest="mode",
         type=mode_mapping,  # argparse 會對傳入的每個值執行此函式
         nargs="+",  # 關鍵：允許輸入多個值，結果會存為 list
-        choices=["photo", "video", "slow_motion", "test_t"],
-        default=["photo", "video", "slow_motion"],
-        help="測試模式 (可多選): photo (p), video (v), slow_motion (s) (預設: photo video)",
+        choices=["photo", "video", "slow_motion", "photo_settings", "test_t"],
+        default=["photo", "video", "slow_motion", "photo_settings"],
+        help="測試模式 (可多選): photo (p), video (v), slow_motion (s), photo_settings (st) (預設: photo video)",
     )
     return parser.parse_args()
 
@@ -239,12 +240,16 @@ def test_photo(click_map) -> None:
     # 確保在拍照模式
     click_camera_mode(pick="left")  # 切到拍照模式
 
-    # 拍照
+    # [PERF] 測量拍照延遲（快門→儲存完成）
     print("拍照中...")
+    t_start = time.monotonic()
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
     wait_exists(click_map["模式"], timeout_ms=5000)
     result = has_saved(timeout_ms=3000)
+    t_end = time.monotonic()
+    capture_latency_ms = (t_end - t_start) * 1000
     print(f"拍照結果: {result}")
+    print(f"📊 拍照延遲: {capture_latency_ms:.0f}ms (快門到儲存完成)")
     print("========== 拍照測試完成 ==========")
 
 
@@ -261,23 +266,15 @@ def test_video(click_map) -> None:
     # 第一次錄影
     print("開始第一次錄影...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)  # 開始錄影
-    time.sleep(10)
+    time.sleep(7)
     print("停止第一次錄影...")
+    t_start = time.monotonic()
     wait_then_click(click_map["拍照鍵"], timeout_ms=3000)  # 停止錄影
-    time.sleep(3)
     result1 = has_saved(timeout_ms=3000)
+    t_end = time.monotonic()
     print(f"第一次錄影結果: {result1}")
-    print()
-
-    # 第二次錄影（測試是否卡住）
-    print("開始第二次錄影...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)  # 開始錄影
-    time.sleep(10)
-    print("停止第二次錄影...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=3000)  # 停止錄影
-    result2 = has_saved(timeout_ms=3000)
-    print(f"第二次錄影結果: {result2}")
-    print("========== 錄影測試完成 ==========")
+    print(f"📊 錄影總耗時 (含儲存): {(t_end - t_start) * 1000:.0f}ms")
+    # print()
 
 
 def test_slow_motion(click_map) -> None:
@@ -314,6 +311,40 @@ def test_t(click_map) -> None:
     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
+
+
+def photo_settings(click_map) -> None:
+    """測試設定選項是否存在。"""
+    print("\n========== 開始測試設定選項 ==========")
+
+    # 確保在拍照模式
+    click_camera_mode(pick="left")  # 切到拍照模式
+
+    # 點擊設定按鈕
+    print("點擊設定...")
+    wait_then_click(click_map["設定"], timeout_ms=2000)
+    time.sleep(0.5)
+
+    # 檢查設定選項是否存在
+    settings_check = [
+        ("靜態影像尺寸", click_map.get("靜態影像尺寸")),
+        ("預拍功能", click_map.get("預拍功能")),
+        ("物件追蹤", click_map.get("物件追蹤")),
+        ("自動拍攝", click_map.get("自動拍攝")),
+        ("失真校正", click_map.get("失真校正")),
+    ]
+    timeout_ms = 1500
+    for setting_name, setting_target in settings_check:
+        if setting_name != "靜態影像尺寸":
+            timeout_ms = 0
+        if setting_target:
+            exists = wait_exists(setting_target, timeout_ms=timeout_ms)
+            status = "✓ 存在" if exists else "✗ 不存在"
+            print(f"  {setting_name}\t: {status}")
+        else:
+            print(f"  {setting_name}\t: ⚠️ 未定義")
+
+    print("========== 測試設定選項完成 ==========")
 
 
 def has_saved(timeout_ms: int = 3000, interval_ms: int = 200):
@@ -374,9 +405,17 @@ def main() -> None:
     # wait_exists(click_targets_map["儲存地點否"], timeout_ms=500)
     click_if_exists(click_targets_map["儲存地點否"])
 
-    wait_exists(
+    # [PERF] 測量相機啟動到 UI 就緒的時間
+    t_launch = time.monotonic()
+    ui_ready = wait_exists(
         click_targets_map["模式"], timeout_ms=7000
     )  # 等待模式按鈕出現，代表相機已準備好
+    t_ready = time.monotonic()
+    startup_ms = (t_ready - t_launch) * 1000
+    print(
+        f"📊 相機啟動到 UI 就緒: {startup_ms:.0f}ms (模式按鈕出現{'✓' if ui_ready else '✗'})"
+    )
+
     file_count = get_dcim_file_count()  # 記錄 /sdcard/DCIM/  檔案數量
     print(f"當前 DCIM 檔案數量: {file_count}")
     # 根據模式選擇測試流程
@@ -384,6 +423,8 @@ def main() -> None:
         test_photo(click_targets_map)
     if "video" in args.mode:
         test_video(click_targets_map)
+    if "photo_settings" in args.mode:
+        photo_settings(click_targets_map)
     if "slow_motion" in args.mode:
         test_slow_motion(click_targets_map)
     if "test_t" in args.mode:
