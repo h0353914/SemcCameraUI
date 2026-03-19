@@ -12,3 +12,4 @@ out/
 # ======================
 magisk_pack/build/
 .tmp/
+ghidra/venv/

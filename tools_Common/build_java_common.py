@@ -20,6 +20,7 @@ PLATFORM_PK8 = ANDROID_TOP / "build/target/product/security/platform.pk8"
 
 CONSCRYPT_LIB_DIR = ANDROID_TOP / "out/host/linux-x86/lib64"
 
+
 @dataclass(frozen=True)
 class JavaBuildError(RuntimeError):
     task: str
@@ -29,7 +30,9 @@ class JavaBuildError(RuntimeError):
 
     def __str__(self) -> str:
         details = self.stderr.strip() or self.stdout.strip() or "未知錯誤"
-        return f"Gradle build failed (task={self.task}, exit={self.returncode}): {details}"
+        return (
+            f"Gradle build failed (task={self.task}, exit={self.returncode}): {details}"
+        )
 
 
 @dataclass(frozen=True)
@@ -159,7 +162,7 @@ def build_java_app(
       - 執行 Gradle 編譯
       - 簽名（signapk，預設開）
       - 返回簽名後的 APK 路徑
-    
+
     注意：複製到目的地由調用者使用 copy_compiled_file 負責
     """
     if java_library_path is None:
@@ -207,6 +210,7 @@ def build_java_app(
     # 編譯 > 簽名
     if sign:
         import tempfile
+
         tmp_signed = Path(tempfile.gettempdir()) / f"{output_name_final}_signed.apk"
         _sign_apk(
             candidate_apk,

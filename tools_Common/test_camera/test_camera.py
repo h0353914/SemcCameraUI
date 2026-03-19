@@ -136,6 +136,7 @@ def parse_args() -> argparse.Namespace:
             "s": "slow_motion",
             "sm": "slow_motion",
             "t": "test_t",
+            "st": "photo_settings",
         }
         # 如果輸入在對應表中，回傳完整名稱；否則回傳原值讓 choices 檢查
         return mapping.get(value.lower(), value)
@@ -163,9 +164,9 @@ def parse_args() -> argparse.Namespace:
         dest="mode",
         type=mode_mapping,  # argparse 會對傳入的每個值執行此函式
         nargs="+",  # 關鍵：允許輸入多個值，結果會存為 list
-        choices=["photo", "video", "slow_motion", "test_t"],
-        default=["photo", "video", "slow_motion"],
-        help="測試模式 (可多選): photo (p), video (v), slow_motion (s) (預設: photo video)",
+        choices=["photo", "video", "slow_motion", "photo_settings"],
+        default=["photo", "video", "slow_motion", "photo_settings"],
+        help="測試模式 (可多選): photo (p), video (v), slow_motion (s), photo_settings (st) (預設: photo video)",
     )
     return parser.parse_args()
 
@@ -229,114 +230,22 @@ def reset_camera_state(click_targets: Iterable[ClickTarget]) -> None:
 
 def stop_camera() -> None:
     ADB.shell(f"am force-stop {CAMERA_PACKAGE_NAME}", check=False)
+    # 同時停止 cameracommon，確保清除緩存的 cacao 會話狀態
+    ADB.shell("am force-stop com.sonymobile.cameracommon", check=False)
+    import time
+
+    time.sleep(1)  # 等待 CacaoService 清理 client session
 
 
-def test_photo(click_map) -> None:
-    """拍照測試流程。"""
-    print("\n========== 開始拍照測試 ==========")
-    global file_count
-
-    # 確保在拍照模式
-    click_camera_mode(pick="left")  # 切到拍照模式
-
-    # 拍照
-    print("拍照中...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
-    wait_exists(click_map["模式"], timeout_ms=5000)
-    result = has_saved(timeout_ms=3000)
-    print(f"拍照結果: {result}")
-    print("========== 拍照測試完成 ==========")
-
-
-def test_video(click_map) -> None:
-    """錄影測試流程。"""
-    print("\n========== 開始錄影測試 ==========")
-    global file_count
-
-    # 切到錄影模式
-    print("切到錄影模式...")
-    click_camera_mode(pick="right")
-    time.sleep(1)
-
-    # 第一次錄影
-    print("開始第一次錄影...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)  # 開始錄影
-    time.sleep(10)
-    print("停止第一次錄影...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=3000)  # 停止錄影
-    time.sleep(3)
-    result1 = has_saved(timeout_ms=3000)
-    print(f"第一次錄影結果: {result1}")
-    print()
-
-    # 第二次錄影（測試是否卡住）
-    print("開始第二次錄影...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)  # 開始錄影
-    time.sleep(10)
-    print("停止第二次錄影...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=3000)  # 停止錄影
-    result2 = has_saved(timeout_ms=3000)
-    print(f"第二次錄影結果: {result2}")
-    print("========== 錄影測試完成 ==========")
-
-
-def test_slow_motion(click_map) -> None:
-    """慢動作測試流程：點模式 → 點慢動作 → 設定 → 選僅一次慢動作模式 → 按下拍照鍵 → 檢查檔案。"""
-    global file_count
-    print("\n========== 開始慢動作測試 ==========")
-
-    print("切到慢動作模式...")
-    print("切到僅一次...")
-    wait_then_click(click_map["模式"], timeout_ms=2000)
-    wait_then_click(click_map["慢動作"], timeout_ms=3000)
-    # wait_then_click(click_map["跳過教學"], timeout_ms=2000)
-    time.sleep(0.5)
-    wait_then_click(click_map["設定"], timeout_ms=2000)
-    wait_then_click(click_map["慢動作模式"], timeout_ms=2000)
-    wait_then_click(click_map["慢動作僅一次"], timeout_ms=2000)
-
-    # 拍照
-    print("慢動作拍照中...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
-    wait_exists(click_map["模式"], timeout_ms=5000)
-    result = has_saved(timeout_ms=3000)
-    拍照結果 = wait_exists(click_map["模式"], timeout_ms=5000)
-    print(f"慢動作拍照結果: {result and 拍照結果}")
-    print("========== 慢動作測試完成 ==========")
-
-
-def test_t(click_map) -> None:
-    wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
-    print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-    print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-    wait_then_click(click_map["關閉色彩和亮度調整"], timeout_ms=2000)
-
-    wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
-    print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-    print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-
-def has_saved(timeout_ms: int = 3000, interval_ms: int = 200):
-    """檢查是否有新照片儲存。"""
-    global file_count
-    deadline = time.monotonic() + timeout_ms / 1000.0
-
-    while time.monotonic() < deadline:
-        new_file_count = get_dcim_file_count()  # 記錄 /sdcard/DCIM/  檔案數量
-        if new_file_count > file_count:
-            file_count = new_file_count
-            print(f"當前 DCIM 檔案數量: {file_count}")
-            return True
-        time.sleep(interval_ms / 1000.0)
-    return False
+def is_camera_running() -> bool:
+    """檢查相機app是否還在運行。"""
+    result = ADB.shell(f"pidof {CAMERA_PACKAGE_NAME}", check=False)
+    if not bool(result.stdout and result.stdout.strip()):
+        sys.exit("⚠️ 無法檢測到相機app，請檢查是否閃退或未啟動。")
 
 
 def get_dcim_file_count() -> int:
-    """取得 /sdcard/DCIM/ 下所有檔案數量，包含子資料夾。
-
-    回傳整數（找不到資料夾或解析錯誤時回傳 0）。
-    """
-    # 使用 find 列出所有檔案並計數（在設備上執行）
+    """取得 /sdcard/DCIM/ 下所有檔案數量，包含子資料夾"""
     result = ADB.shell("find /sdcard/DCIM -type f | wc -l", check=False)
     stdout = (result.stdout or "").strip()
     if not stdout:
@@ -346,6 +255,192 @@ def get_dcim_file_count() -> int:
     except ValueError:
         print(f"警告：解析 DCIM 檔案數失敗，輸出: {stdout}")
         return 0
+
+
+def has_saved(timeout_ms: int = 3000, interval_ms: int = 200) -> bool:
+    """檢查 DCIM 是否新增檔案，每次掃描都印出數量，找到新檔案就 True"""
+    global file_count
+
+    deadline = time.monotonic() + timeout_ms / 1000
+    success = False
+
+    while time.monotonic() < deadline:
+        new_count = get_dcim_file_count()
+        print(f"當前 DCIM 檔案數量: {new_count}")
+
+        if new_count > file_count:
+            file_count = new_count
+            success = True
+            break  # 找到新檔案就算成功
+
+        time.sleep(interval_ms / 1000)
+
+    return success
+
+
+def _check_ready_and_saved(click_map, save_timeout=3000) -> bool:
+    """檢查模式是否恢復 + 檔案是否儲存，每次都掃描，結果有一次失敗就 False"""
+    ready = wait_exists(click_map["模式"], timeout_ms=5000)
+    print(f"模式按鈕恢復: {'✓' if ready else '✗'}")
+
+    saved = has_saved(timeout_ms=save_timeout)
+    result = ready and saved
+
+    print(f"檢查結果: {result}")
+    return result
+
+
+def test_photo(click_map) -> bool:
+    """拍照測試流程"""
+    print("\n========== 開始拍照測試 ==========")
+    global file_count
+
+    click_camera_mode(pick="left")
+
+    print("拍照中...")
+    t_start = time.monotonic()
+
+    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
+    result = _check_ready_and_saved(click_map)
+
+    capture_latency_ms = (time.monotonic() - t_start) * 1000
+
+    print(f"拍照結果: {result}")
+    print(f"📊 拍照延遲: {capture_latency_ms:.0f}ms (快門到儲存完成)")
+    print("========== 拍照測試完成 ==========")
+
+    return result
+
+
+def test_video(click_map) -> bool:
+    """錄影測試流程"""
+    print("\n========== 開始錄影測試 ==========")
+    global file_count
+
+    print("切到錄影模式...")
+    click_camera_mode(pick="right")
+    time.sleep(1)
+
+    print("開始錄影...")
+    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
+
+    time.sleep(7)
+
+    print("停止錄影...")
+    t_start = time.monotonic()
+    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
+
+    result = _check_ready_and_saved(click_map)
+    elapsed_ms = (time.monotonic() - t_start) * 1000
+
+    print(f"錄影結果: {result}")
+    print(f"📊 錄影總耗時 (含儲存): {elapsed_ms:.0f}ms")
+
+    return result
+
+
+def test_slow_motion(click_map) -> bool:
+    """慢動作測試流程"""
+    print("\n========== 開始慢動作測試 ==========")
+    global file_count
+
+    print("切到慢動作模式...")
+    wait_then_click(click_map["模式"], timeout_ms=2000)
+    wait_then_click(click_map["慢動作"], timeout_ms=5000)
+
+    time.sleep(0.5)
+
+    wait_then_click(click_map["設定"], timeout_ms=2000)
+    wait_then_click(click_map["慢動作模式"], timeout_ms=2000)
+    wait_then_click(click_map["慢動作僅一次"], timeout_ms=2000)
+
+    print("第一次慢動作拍攝中...")
+    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
+
+    result = _check_ready_and_saved(click_map)
+
+    print(f"第一次慢動作拍攝結果: {result}")
+
+    print("第二次慢動作拍攝中...")
+    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
+
+    result = _check_ready_and_saved(click_map)
+
+    print(f"第二次慢動作拍攝結果: {result}")
+
+    print("========== 慢動作測試完成 ==========")
+
+    return result
+
+
+# def test_t(click_map) -> bool:
+#     """色彩與亮度滑動測試"""
+#     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
+
+#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
+#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
+
+#     wait_then_click(click_map["關閉色彩和亮度調整"], timeout_ms=2000)
+
+#     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
+
+#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
+#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
+
+#     return True
+
+
+def test_photo_settings(click_map) -> bool:
+    """測試拍照設定是否存在"""
+    print("\n========== 開始測試設定選項 ==========")
+
+    SLEEP_SHORT = 0.5  # 短暫等待時間
+
+    if not wait_exists(click_map["錄影拍照切換"], timeout_ms=2000):
+        wait_then_click(click_map["模式"], timeout_ms=2000)
+
+    # 確保在拍照模式
+    click_camera_mode(pick="left")  # 切到拍照模式
+    wait_exists(click_map["模式"], timeout_ms=5000)
+
+    # 點擊設定按鈕
+    def open_settings():
+        print("點擊設定...")
+        wait_then_click(click_map["設定"], timeout_ms=2000)
+        time.sleep(SLEEP_SHORT)
+
+    open_settings()
+
+    # 所有設定選項清單
+    settings_check = [
+        ("靜態影像尺寸", click_map.get("靜態影像尺寸")),
+        ("預拍功能", click_map.get("預拍功能")),
+        ("物件追蹤", click_map.get("物件追蹤")),
+        ("自動拍攝", click_map.get("自動拍攝")),
+        ("失真校正", click_map.get("失真校正")),
+    ]
+
+    result = True
+
+    for name, target in settings_check:
+        exists = wait_exists(target, timeout_ms=1500)
+
+        if name == "靜態影像尺寸" and not exists:
+            print("再次嘗試點擊設定...")
+            open_settings()
+            exists = wait_exists(target, timeout_ms=1500)
+
+        print(f"  {name}\t: {'✓ 存在' if exists else '✗ 不存在'}")
+
+        if not exists:
+            result = False
+
+    open_settings()  # 關閉設定
+
+    print(f"設定選項測試結果: {result}")
+    print("========== 測試設定選項完成 ==========")
+
+    return result
 
 
 def main() -> None:
@@ -374,22 +469,43 @@ def main() -> None:
     # wait_exists(click_targets_map["儲存地點否"], timeout_ms=500)
     click_if_exists(click_targets_map["儲存地點否"])
 
-    wait_exists(
+    # [PERF] 測量相機啟動到 UI 就緒的時間
+    t_launch = time.monotonic()
+    ready = wait_exists(
         click_targets_map["模式"], timeout_ms=7000
     )  # 等待模式按鈕出現，代表相機已準備好
+    t_ready = time.monotonic()
+    startup_ms = (t_ready - t_launch) * 1000
+    print(
+        f"📊 相機啟動到 UI 就緒: {startup_ms:.0f}ms (模式按鈕出現{'✓' if ready else '✗'})"
+    )
+
+    if not ready:
+        print("⚠️ 相機 UI 未就緒，模式按鈕未出現。")
+
+
     file_count = get_dcim_file_count()  # 記錄 /sdcard/DCIM/  檔案數量
     print(f"當前 DCIM 檔案數量: {file_count}")
     # 根據模式選擇測試流程
-    if "photo" in args.mode:
-        test_photo(click_targets_map)
-    if "video" in args.mode:
-        test_video(click_targets_map)
-    if "slow_motion" in args.mode:
-        test_slow_motion(click_targets_map)
-    if "test_t" in args.mode:
-        test_t(click_targets_map)
+    result = True
 
-    print("\n測試完成！")
+    tests = {
+        "photo": test_photo,
+        "video": test_video,
+        "photo_settings": test_photo_settings,
+        "slow_motion": test_slow_motion,
+    }
+
+    for mode in args.mode:
+        if result and mode in tests:
+            is_camera_running()
+            result = tests[mode](click_targets_map)
+            print()
+
+    print("\n測試結果: " + ("✅ 全部通過" if result else "❌ 有項目失敗"))
+    # if not result:
+    #     pass
+    # click_targets_map("無法啟動相機")
     # stop_camera()  # 停止相機應用程式
 
 

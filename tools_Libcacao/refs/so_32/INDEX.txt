@@ -1,0 +1,113 @@
+# libcacao_process_ctrl_gateway.so 依賴庫索引
+# 動態追蹤 + 靜態分析生成
+# 生成日期: 2026-03-17
+
+## 直接依賴 (19個 NEEDED entries)
+
+基礎庫:
+  libandroid.so             - Android native interface
+  libbinder.so              - Android IPC/Binder
+  libcutils.so              - Android utilities
+  libutils.so               - Android utilities extensions
+  libgui.so                 - Android GUI framework
+  libc++.so                 - C++ standard library
+  libc.so                   - C standard library
+  libm.so                   - Math library
+  libdl.so                  - Dynamic loader
+
+HIDL層:
+  libhidlbase.so            - HIDL base layer
+  libhidltransport.so       - HIDL transport
+  android.hidl.base@1.0.so  - HIDL base interface
+  android.hidl.manager@1.0.so - HIDL service manager
+  android.hardware.graphics.allocator@2.0.so - Graphics allocator
+
+CACAO層:
+  libcacao_pal.so           - CACAO PAL (Platform Abstraction Layer)
+  libcacao_client.so        - CACAO client library
+
+Provider層:
+  vendor.somc.hardware.camera.provider@1.0.so - SOMC camera provider
+  vendor.somc.hardware.camera.cacao@3.0.so    - CACAO 3.0 interface
+  vendor.somc.hardware.camera.cacao@3.1.so    - CACAO 3.1 interface (current)
+
+## 間接依賴 (通過運行時追蹤確認)
+
+CACAO 支持:
+  libcacao_common.so        - Common CACAO utilities
+  libcacao_process_ctrl.so  - CACAO process control (vendor)
+  libcacao_service.so       - CACAO service library
+
+Camera框架:
+  libcamera_client.so       - Camera client library
+  libcamera_metadata.so     - Camera metadata handling
+
+HAL Interface:
+  android.hardware.camera.common@1.0.so      - Camera common interface
+  android.hardware.camera.device@1.0.so      - Camera device v1
+  android.hardware.camera.device@3.2.so      - Camera device v3.2
+  android.hardware.camera.provider@2.4.so    - Camera provider
+  android.hardware.graphics.common@1.0.so    - Graphics common
+
+SOMC實現:
+  vendor.somc.hardware.camera.device@1.0.so      - SOMC camera device
+  vendor.somc.hardware.camera.cacao@1.0.so       - CACAO 1.0 (legacy)
+  vendor.somc.hardware.camera.cacao@2.0.so       - CACAO 2.0 (legacy)
+  vendor.somc.hardware.camera.cacao@3.0-impl.so  - CACAO 3.0 implementation
+
+QTI/Qualcomm:
+  vendor.qti.hardware.camera.device@1.0.so   - QTI camera device
+
+## 複製清單
+
+📍 /system/lib/ (19個文件)
+  android.hardware.camera.common@1.0.so     [20 KB]
+  android.hardware.camera.device@1.0.so     [216 KB]
+  android.hardware.camera.device@3.2.so     [164 KB]
+  android.hardware.camera.provider@2.4.so   [121 KB]
+  android.hardware.graphics.allocator@2.0.so [75 KB]
+  android.hardware.graphics.common@1.0.so   [16 KB]
+  android.hidl.base@1.0.so                  [72 KB]
+  android.hidl.manager@1.0.so                [116 KB]
+  libandroid.so                              [104 KB]
+  libbinder.so                               [433 KB]
+  libcacao_client.so                         [97 KB]
+  libcacao_pal.so                            [37 KB]
+  libcacao_service.so                        [74 KB]
+  libcacao_process_ctrl_gateway.so          [84 KB] ⭐ TARGET
+  libcamera_client.so                        [255 KB]
+  libcamera_metadata.so                      [47 KB]
+  libcutils.so                               [70 KB]
+  libgui.so                                  [519 KB]
+  libhidlbase.so                             [59 KB]
+  libhidltransport.so                        [301 KB]
+  libutils.so                                [101 KB]
+  vendor.qti.hardware.camera.device@1.0.so  [84 KB]
+  vendor.somc.hardware.camera.cacao@3.0.so  [131 KB]
+  vendor.somc.hardware.camera.cacao@3.1.so  [93 KB]
+  vendor.somc.hardware.camera.device@1.0.so [148 KB]
+  vendor.somc.hardware.camera.provider@1.0.so [110 KB]
+
+📍 /vendor/lib/ (12個文件)
+  libcacao_common.so                         [45 KB]
+  libcacao_process_ctrl.so                   [58 KB]
+  vendor.somc.hardware.camera.cacao@1.0.so  [?]
+  vendor.somc.hardware.camera.cacao@2.0.so  [?]
+  vendor.somc.hardware.camera.cacao@3.0-impl.so [?]
+  vendor.somc.hardware.camera.cacao@3.0.so  [?]
+  vendor.somc.hardware.camera.cacao@3.1.so  [?]
+
+合計: 31個 .so 文件 (~5.5 MB)
+
+## 動態追蹤來源
+
+cacaoserver 進程 (PID: 1155) 的 /proc/1155/maps
+所有運行時加載的libraries已驗證並複製
+
+## 使用說明
+
+1. 所有libraries已複製到 ./tools_Libcacao/refs/so/
+2. 使用DEPENDENCIES.md查看詳細的依賴樹
+3. 使用this INDEX.txt快速查找library位置
+4. libcacao_process_ctrl_gateway.so 是主目標library
+

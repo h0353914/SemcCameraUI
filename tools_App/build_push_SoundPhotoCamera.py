@@ -17,7 +17,6 @@ PRIV_APP_DIR = ANDROID_TOP / "vendor/sony/yoshino-common/proprietary/system/priv
 
 SOURCE_FOLDER_NAME = "SoundPhotoCamera-xhdpi"
 OUTPUT_NAME = "SoundPhotoCamera-xhdpi-release"
-reboot = False
 PACKAGE = "com.sonymobile.android.addoncamera.soundphoto"
 
 out = [
@@ -57,7 +56,6 @@ def main():
         push_apk(
             OUTPUT_NAME,
             force_stop_package=PACKAGE,
-            reboot=reboot,
             device_serial=args.device,
         )
 

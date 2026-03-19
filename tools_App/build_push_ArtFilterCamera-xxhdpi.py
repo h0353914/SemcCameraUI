@@ -16,7 +16,6 @@ PRIV_APP_DIR = ANDROID_TOP / "vendor/sony/yoshino-common/proprietary/system/priv
 
 SOURCE_FOLDER_NAME = "ArtFilterCamera-xhdpi"
 OUTPUT_NAME = "ArtFilterCamera-xhdpi-release"
-reboot = False
 PACKAGE = "com.sonyericsson.android.addoncamera.artfilter"
 
 out = [
@@ -56,7 +55,6 @@ def main():
         push_apk(
             OUTPUT_NAME,
             force_stop_package=PACKAGE,
-            reboot=reboot,
             device_serial=args.device,
         )
 

@@ -27,5 +27,32 @@
     "text": "超級慢(僅限一次)"
   },
   "色彩和亮度": "com.sonyericsson.android.camera:id/primary_shortcut_semi_auto",
-  "關閉色彩和亮度調整": "com.sonyericsson.android.camera:id/semi_auto_reset_button"
+  "關閉色彩和亮度調整": "com.sonyericsson.android.camera:id/semi_auto_reset_button",
+  "靜態影像尺寸": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "靜態影像尺寸"
+  },
+  "預拍功能": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "預拍功能"
+  },
+  "物件追蹤": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "物件追蹤"
+  },
+  "自動拍攝": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "自動拍攝"
+  },
+  "失真校正": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "失真校正"
+  },
+  "錄影拍照切換": {
+    "resource_id": "com.sonyericsson.android.camera:id/application_navigator"
+  },
+  "無法啟動相機": {
+    "text": "無法啟動相機。請重新啟動相機或裝置。",
+    "resource_id": "android:id/message"
+  }
 }

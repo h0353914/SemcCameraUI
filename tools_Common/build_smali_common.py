@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-import shutil
 import subprocess
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
@@ -32,7 +31,7 @@ def build_smali_app(
 ) -> Path:
     source_folder = source_folder_name or folder_name
     output_name_final = output_name or folder_name
-    
+
     target_folder = REPO_ROOT / "App_smali" / source_folder
     build_dir = PRIV_APP_DIR / output_name_final
     build_dir.mkdir(parents=True, exist_ok=True)

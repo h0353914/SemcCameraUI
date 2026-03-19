@@ -16,7 +16,6 @@ PRIV_APP_DIR = ANDROID_TOP / "vendor/sony/yoshino-common/proprietary/system/priv
 
 SOURCE_FOLDER_NAME = "SemcCameraUI-xxhdpi"
 OUTPUT_NAME = "SemcCameraUI-xxhdpi-release"
-reboot = False
 PACKAGE = "com.sonyericsson.android.camera"
 
 out = [
@@ -62,7 +61,6 @@ def main():
         push_apk(
             OUTPUT_NAME,
             force_stop_package=PACKAGE,
-            reboot=reboot,
             device_serial=args.device,
         )
 

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import argparse
-import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -11,6 +10,7 @@ SEMCCAMERA_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SEMCCAMERA_ROOT))
 
 from tools_Common.push_common import push_so, copy_compiled_file  # noqa: E402
+from tools_Common.adb import Adb  # noqa: E402
 
 LINEAGE_ROOT = Path.home() / "lineageos"
 LUNCH_TARGET = "lineage_poplar_kddi-ap2a-userdebug"
@@ -36,16 +36,6 @@ def run_bash(cmd: str, cwd: Path) -> None:
     subprocess.run(["bash", "-lc", cmd], cwd=str(cwd), check=True)
 
 
-def copy_glob(src_dir: Path, pattern: str, dst_dir: Path) -> int:
-    """複製符合 pattern 的檔案到目錄。"""
-    if not src_dir.exists():
-        return 0
-    files = [p for p in sorted(src_dir.glob(pattern)) if p.is_file()]
-    for f in files:
-        copy_compiled_file(f, dst_dir / f.name)
-    return len(files)
-
-
 def push_staged_libs(out_root: Path, device_serial: str | None = None) -> None:
     """推送 staged 的 .so 到設備 /system/lib{,64}/"""
     for arch in ("lib64", "lib"):
@@ -60,7 +50,12 @@ def push_staged_libs(out_root: Path, device_serial: str | None = None) -> None:
         for lib_path in libs:
             print(f"[PUSH] {arch}/{lib_path.name}")
             try:
-                push_so(lib_path.name, arch=arch, local_path=lib_path, device_serial=device_serial)
+                push_so(
+                    lib_path.name,
+                    arch=arch,
+                    local_path=lib_path,
+                    device_serial=device_serial,
+                )
             except Exception as exc:
                 print(f"[WARN] 推送 {lib_path.name} 失敗: {exc}")
 
@@ -68,7 +63,7 @@ def push_staged_libs(out_root: Path, device_serial: str | None = None) -> None:
 def main() -> int:
     ap = argparse.ArgumentParser(
         description="Soong 編譯 Libcacao wrapper 並部署到設備。\n"
-                    "切換 git 分支後建議加 --clean 避免 Soong 快取問題。",
+        "切換 git 分支後建議加 --clean 避免 Soong 快取問題。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     ap.add_argument(
@@ -96,6 +91,12 @@ def main() -> int:
         type=str,
         help="指定設備序號",
     )
+    ap.add_argument(
+        "-r",
+        "--reboot",
+        action="store_true",
+        help="推送完成後重啟設備",
+    )
     args = ap.parse_args()
 
     # 預設行為：同時 build + push；指定 -b/-p 則只執行對應步驟
@@ -106,18 +107,18 @@ def main() -> int:
     out_root = repo_root / "out"
     libcacao_root = repo_root / "Libcacao"
     product_out = LINEAGE_ROOT / "out" / "target" / "product" / PRODUCT_NAME
-    
+
     if not product_out.exists():
         raise SystemExit(f"[ERR] 找不到 product out：{product_out}")
 
     # ── 路徑配置 ──
     paths = {
-        "sys64": product_out / "system" / "lib64",    # Soong 編譯產出 (64-bit)
-        "sys32": product_out / "system" / "lib",      # Soong 編譯產出 (32-bit)
-        "out64": out_root / "lib64",                   # 本地 staged 目錄 (64-bit)
-        "out32": out_root / "lib",                     # 本地 staged 目錄 (32-bit)
+        "sys64": product_out / "system" / "lib64",  # Soong 編譯產出 (64-bit)
+        "sys32": product_out / "system" / "lib",  # Soong 編譯產出 (32-bit)
+        "out64": out_root / "lib64",  # 本地 staged 目錄 (64-bit)
+        "out32": out_root / "lib",  # 本地 staged 目錄 (32-bit)
         "preb64": libcacao_root / "prebuilts" / "lib64",  # prebuilt _real.so (64-bit)
-        "preb32": libcacao_root / "prebuilts" / "lib",    # prebuilt _real.so (32-bit)
+        "preb32": libcacao_root / "prebuilts" / "lib",  # prebuilt _real.so (32-bit)
     }
 
     print(f"[INFO] LINEAGE_ROOT = {LINEAGE_ROOT}")
@@ -145,13 +146,10 @@ def main() -> int:
         # ── 複製 wrapper / _real .so 到 staged 目錄 ──
         for module in WRAPPER_MODULES:
             so = module + ".so"
-            if "_real" in module:
-                # _real 檔案從 prebuilts 複製（不需要 Soong 編譯）
-                src_keys = [("64-bit", "preb64", "out64"), ("32-bit", "preb32", "out32")]
-            else:
-                # wrapper 檔案從 Soong 編譯產出複製
-                src_keys = [("64-bit", "sys64", "out64"), ("32-bit", "sys32", "out32")]
-            
+
+            # wrapper 檔案（以及 CUSTOM_COMPILED_REAL 中的 _real 模組）從 Soong 編譯產出複製
+            src_keys = [("64-bit", "sys64", "out64"), ("32-bit", "sys32", "out32")]
+
             for arch, src_key, out_key in src_keys:
                 src = paths[src_key] / so
                 if src.exists():
@@ -167,6 +165,14 @@ def main() -> int:
 
     if do_push:
         push_staged_libs(out_root, device_serial=args.device)
+
+        if args.reboot:
+            print("\n[INFO] 正在重啟設備...")
+            adb = Adb(serial=args.device)
+            try:
+                adb.reboot(check=False)
+            except Exception as exc:
+                print(f"[WARN] 重啟失敗: {exc}")
 
     return 0
 
