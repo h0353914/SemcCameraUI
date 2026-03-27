@@ -27,3 +27,6 @@
 [submodule "sony_camera_magsik"]
 	path = sony_camera_magsik
 	url = https://github.com/h0353914/sony_camera_magsik
+[submodule "ghidra/ghidra-mcp"]
+	path = ghidra/ghidra-mcp
+	url = https://github.com/bethington/ghidra-mcp
