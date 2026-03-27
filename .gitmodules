@@ -27,3 +27,7 @@
 	path = App_java/CameraPanorama
 	url = https://github.com/h0353914/CameraPanorama-release
 	branch = java-2.3.1.B.0.6-a9
+
+[submodule "sony_camera_magsik"]
+	path = sony_camera_magsik
+	url = https://github.com/h0353914/sony_camera_magsik
