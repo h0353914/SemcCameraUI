@@ -24,3 +24,6 @@
 [submodule "App_java/CameraPanorama"]
 	path = App_java/CameraPanorama
 	url = https://github.com/h0353914/CameraPanorama-release/
+[submodule "sony_camera_magsik"]
+	path = sony_camera_magsik
+	url = https://github.com/h0353914/sony_camera_magsik
