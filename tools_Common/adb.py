@@ -96,6 +96,13 @@ class Adb:
             cmd += ["-s", self.serial]
         return cmd
 
+    def _print_result(self, result: subprocess.CompletedProcess[str]) -> None:
+        """自動打印 result 的 stdout 和 stderr"""
+        if result.stdout:
+            print(result.stdout.strip())
+        if result.stderr:
+            print(result.stderr.strip())
+
     def run(
         self,
         args: list[str],
@@ -178,4 +185,56 @@ class Adb:
                 stderr="",
             )
 
-        return self.run(["root"], timeout=timeout, check=check)
+        p = self.run(["root"], timeout=timeout, check=check)
+        self._print_result(p)
+        return p
+
+    def remount(
+        self,
+        *,
+        timeout: int = 30,
+        check: bool = True,
+    ) -> subprocess.CompletedProcess[str]:
+        """adb remount（重新掛載 /system 為可寫）"""
+        p = self.run(["remount"], timeout=timeout, check=check)
+        self._print_result(p)
+        return p
+
+    def reboot(
+        self,
+        target: str = "",
+        *,
+        timeout: int = 30,
+        check: bool = True,
+    ) -> subprocess.CompletedProcess[str]:
+        """adb reboot [target]（重啟裝置，target 可為 bootloader / recovery / ""）"""
+        args = ["reboot"]
+        if target:
+            args.append(target)
+        p = self.run(args, timeout=timeout, check=check)
+        self._print_result(p)
+        return p
+
+    def push(
+        self,
+        local: str,
+        remote: str,
+        *,
+        timeout: int = 120,
+        check: bool = True,
+    ) -> subprocess.CompletedProcess[str]:
+        """adb push <local> <remote>（推送本地檔案到裝置）"""
+        p = self.run(["push", local, remote], timeout=timeout, check=check)
+        self._print_result(p)
+        return p
+
+    def devices(
+        self,
+        *,
+        timeout: int = 10,
+        check: bool = True,
+    ) -> subprocess.CompletedProcess[str]:
+        """adb devices（列出所有連接的裝置）"""
+        p = self.run(["devices"], timeout=timeout, check=check)
+        self._print_result(p)
+        return p

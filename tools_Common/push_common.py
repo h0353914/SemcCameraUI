@@ -14,72 +14,161 @@ ADB_LIB64_DIR = "/system/lib64"
 DEFAULT_ADB = Adb()
 
 
-def _run_adb_commands(adb: Adb, commands: list[list[str]]) -> None:
-    base_cmd = [adb.adb_path] + (["-s", adb.serial] if adb.serial else [])
+def _is_userdebug(adb: Adb) -> bool:
+    """
+    偵測裝置是否為 userdebug 模式。
 
-    for args in commands:
-        cmd_display = " ".join(base_cmd + args)
-        print(f"Executing: {cmd_display}")
-        try:
-            result = adb.run(args, check=False)
-        except Exception as exc:
-            print(str(exc))
-            print(f"Command failed: {cmd_display}")
-            break
+    Returns:
+        True 如果是 userdebug，False 如果是 user 或其他模式
+    """
+    try:
+        result = adb.shell("getprop ro.build.type", check=False)
+        build_type = result.stdout.strip() if result.stdout else ""
+        is_debug = build_type == "userdebug"
+        print(f"Device build type: {build_type} (userdebug: {is_debug})")
+        return is_debug
+    except Exception as exc:
+        print(f"Failed to detect build type: {exc}")
+        return False
 
-        if result.stdout:
-            print(result.stdout.strip())
-        if result.stderr:
-            print(result.stderr.strip())
+
+def _push_with_su(
+    adb: Adb,
+    local_path: Path,
+    remote_destination: str,
+) -> bool:
+    """
+    使用 su 權限推送檔案到裝置。
+
+    對於 non-userdebug 裝置，先推送到 /data/local/tmp，
+    然後使用 su 移動到目標位置。會自動重新掛載 /system 為可寫。
+
+    Returns:
+        True 如果推送成功，False 如果失敗
+    """
+
+    temp_remote = f"/data/local/tmp/{local_path.name}"
+
+    # 步驟1: 推送到臨時目錄
+    print(f"Pushing to temporary location: {temp_remote}")
+    try:
+        result = adb.push(str(local_path), temp_remote, check=False)
         if result.returncode != 0:
-            print(f"Command failed: {cmd_display}")
-            break
+            print("Failed to push to temporary location")
+            return False
+    except Exception as exc:
+        print(f"Push to temporary location failed: {exc}")
+        return False
+
+    # 步驟2: 使用 su 重新掛載 /system 為可寫
+    print("Remounting /system as writable with su")
+    try:
+        remount_cmd = "su -c 'mount -o rw,remount,rw /system || mount -o rw,remount,rw /'"
+        result = adb.shell(remount_cmd, check=False)
+        if result.returncode != 0 and result.stderr:
+            print(f"Warning: Remount may have failed: {result.stderr.strip()}")
+    except Exception as exc:
+        print(f"Warning: Remount failed: {exc}")
+
+    # 步驟3: 建立目標目錄並移動檔案
+    print(f"Moving to target location with su: {remote_destination}")
+    try:
+        # 建立目標目錄
+        target_dir = remote_destination.rsplit("/", 1)[0]
+        mkdir_cmd = f"su -c 'mkdir -p {target_dir}'"
+        result = adb.shell(mkdir_cmd, check=False)
+        if result.returncode != 0 and result.stderr:
+            print(f"Warning: Failed to create directory: {result.stderr.strip()}")
+
+        # 移動檔案
+        mv_cmd = f"su -c 'mv {temp_remote} {remote_destination}'"
+        result = adb.shell(mv_cmd, check=False)
+        if result.returncode != 0:
+            print("Failed to move file to target location")
+            if result.stderr:
+                print(result.stderr.strip())
+            return False
+
+        # 設定權限
+        chmod_cmd = f"su -c 'chmod 644 {remote_destination}'"
+        result = adb.shell(chmod_cmd, check=False)
+
+        print(f"Successfully pushed to {remote_destination} using su")
+        return True
+    except Exception as exc:
+        print(f"Move with su failed: {exc}")
+        return False
 
 
 def push(
-    local_source, remote_destination: str, *, adb: Adb | None = None, reboot=False
+    local_source: str | Path,
+    remote_destination: str,
+    *,
+    adb: Adb | None = None,
+    device_serial: str | None = None,
 ):
-    adb_client = adb or DEFAULT_ADB
+    if device_serial:
+        adb_client = Adb(serial=device_serial)
+    else:
+        adb_client = adb or DEFAULT_ADB
     local_path = Path(local_source)
     if not local_path.exists():
         raise FileNotFoundError(f"{local_path} does not exist")
 
-    commands = [
-        ["devices"],
-        ["root"],
-        ["remount"],
-        ["push", str(local_path), remote_destination],
-    ]
+    # 偵測是否為 userdebug 模式
+    is_userdebug = _is_userdebug(adb_client)
 
-    if reboot:
-        commands.append(["reboot"])
+    if is_userdebug:
+        # userdebug 模式：使用 root 和 remount 推送
+        print("Executing: devices")
+        adb_client.devices(check=False)
 
-    _run_adb_commands(adb_client, commands)
+        print("Executing: root")
+        adb_client.root(check=False)
+
+        print("Executing: remount")
+        adb_client.remount(check=False)
+
+        print(f"Executing: push {local_path} {remote_destination}")
+        adb_client.push(str(local_path), remote_destination, check=False)
+    else:
+        # user 模式：使用 su 推送
+        print("Device is not userdebug, using su to push file")
+        print("Executing: devices")
+        adb_client.devices(check=False)
+
+        success = _push_with_su(adb_client, local_path, remote_destination)
+        if not success:
+            raise RuntimeError(
+                f"Failed to push {local_path} to {remote_destination} using su"
+            )
 
 
 def push_apk(
-    folder_name,
+    folder_name: str,
     force_stop_package: str | None = None,
-    reboot=False,
     adb: Adb | None = None,
     device_serial: str | None = None,
 ):
     local_apk_path = PRIV_APP_DIR / folder_name / f"{folder_name}.apk"
     remote_path = f"{ADB_PRIV_APP_DIR}/{folder_name}/{folder_name}.apk"
 
-    adb_client = adb or DEFAULT_ADB
     if device_serial:
         adb_client = Adb(serial=device_serial)
-    push(local_apk_path, remote_path, adb=adb_client, reboot=reboot)
+    else:
+        adb_client = adb or DEFAULT_ADB
+
+    push(
+        local_apk_path,
+        remote_path,
+        adb=adb_client,
+        device_serial=device_serial,
+    )
 
     if force_stop_package:
         try:
             print(f"Attempting to force-stop package: {force_stop_package}")
-            p = adb_client.shell(f"am force-stop {force_stop_package}", check=False)
-            if p.stdout:
-                print(p.stdout.strip())
-            if p.stderr:
-                print(p.stderr.strip())
+            adb_client.shell(f"am force-stop {force_stop_package}", check=False)
         except Exception as exc:
             print(f"Force-stop failed: {exc}")
 
@@ -88,19 +177,67 @@ def push_so(
     lib_name: str,
     arch: str = "lib64",
     *,
+    local_path: str | Path | None = None,
     remote_dir: str | None = None,
-    reboot=False,
     adb: Adb | None = None,
+    device_serial: str | None = None,
 ):
-    adb_client = adb or DEFAULT_ADB
     if arch not in ("lib", "lib64"):
         raise ValueError("arch must be either 'lib' or 'lib64'")
 
-    local_path = OUT_SO_DIR / arch / lib_name
+    # 如果提供了自訂的 local_path，使用它；否則使用預設的 OUT_SO_DIR
+    if local_path is None:
+        local_path = OUT_SO_DIR / arch / lib_name
+    else:
+        local_path = Path(local_path)
+
     if not local_path.exists():
         raise FileNotFoundError(f"{local_path} does not exist")
 
     remote_base = remote_dir or (ADB_LIB64_DIR if arch == "lib64" else ADB_LIB_DIR)
     remote_path = f"{remote_base.rstrip('/')}/{lib_name}"
 
-    push(local_path, remote_path, adb=adb_client, reboot=reboot)
+    push(local_path, remote_path, adb=adb, device_serial=device_serial)
+
+
+def copy_compiled_file(
+    source: str | Path,
+    destinations: str | Path | list[str | Path],
+    *,
+    create_dirs=True,
+):
+    """
+    複製編譯的檔案到一個或多個目的地位置。
+
+    Args:
+        source: 原始檔案路徑
+        destinations: 目的地路徑，可以是單個路徑或路徑列表
+        create_dirs: 如果目的地目錄不存在，是否建立它們（預設為 True）
+
+    Raises:
+        FileNotFoundError: 如果源檔案不存在
+    """
+    import shutil
+
+    source_path = Path(source)
+    if not source_path.exists():
+        raise FileNotFoundError(f"{source_path} does not exist")
+
+    if not isinstance(destinations, list):
+        destinations = [destinations]
+
+    for dest in destinations:
+        dest_path = Path(dest)
+
+        if create_dirs:
+            dest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        print(f"Copying: {source_path} -> {dest_path}")
+        try:
+            if source_path.is_file():
+                shutil.copy2(source_path, dest_path)
+            else:
+                shutil.copytree(source_path, dest_path, dirs_exist_ok=True)
+            print(f"Successfully copied to {dest_path}")
+        except Exception as exc:
+            print(f"Failed to copy to {dest_path}: {exc}")
