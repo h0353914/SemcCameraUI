@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-import argparse
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from tools_Common.parse_args import parse_args  # noqa: E402
+from tools_Common.adb import Adb  # noqa: E402
 from tools_Common.build_smali_common import build_smali_app  # noqa: E402
 from tools_Common.push_common import push_apk, copy_compiled_file  # noqa: E402
 from tools_Common.sign_common import sign_and_report_apk  # noqa: E402
@@ -25,44 +26,33 @@ out = [
 
 
 def main():
-    parser = argparse.ArgumentParser(description=f"Build and push {OUTPUT_NAME}")
-    parser.add_argument(
-        "-b", "--build", action="store_true", help="Only build and sign the APK"
-    )
-    parser.add_argument(
-        "-p", "--push", action="store_true", help="Only push the APK to the device"
-    )
-    parser.add_argument(
-        "-d",
-        "--device",
-        type=str,
-        help="Specify device serial number",
-        # default="QV700WMR11",
-    )
-    args = parser.parse_args()
+    args = parse_args(f"Build and push {OUTPUT_NAME}")
 
-    # Default logic: if no arguments, do both
-    do_build = args.build or not (args.build or args.push)
-    do_push = args.push or not (args.build or args.push)
+    apk_path = None
 
-    if do_build:
+    if args.build:
         apk_path = build_smali_app(
             SOURCE_FOLDER_NAME,
             source_folder_name=SOURCE_FOLDER_NAME,
             output_name=OUTPUT_NAME,
         )
         sign_and_report_apk(apk_path)
+
+    if args.copy:
         copy_compiled_file(
-            apk_path,
+            apk_path if args.build else None,
             out,
         )
 
-    if do_push:
+    if args.push:
         push_apk(
             OUTPUT_NAME,
             force_stop_package=PACKAGE,
             device_serial=args.device,
         )
+        if args.reboot:
+            adb = Adb(serial=args.device) if args.device else Adb()
+            adb.reboot()
 
 
 if __name__ == "__main__":

@@ -2,30 +2,29 @@
 import argparse
 import os
 from pathlib import Path
+import re
 import subprocess
 import sys
+import threading
 import time
-from typing import Iterable
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
-import SemcCameraUI.tools_Common.test_camera.uiagent_client as uiagent_client  # noqa: E402
-import SemcCameraUI.tools_Common.test_camera.uiagent_instrumentation_client as uiagent_instrumentation_client  # noqa: E402
-from SemcCameraUI.tools_Common.test_camera.key import (  # noqa: E402
-    ClickTarget,
+import uiagent_client as uiagent_client  # noqa: E402
+import uiagent_instrumentation_client as uiagent_instrumentation_client  # noqa: E402
+from key import (  # noqa: E402
     load_click_targets,
 )
-from SemcCameraUI.tools_Common.test_camera.uiagent_client import (  # noqa: E402
+from uiagent_client import (  # noqa: E402
+    click,
     click_child_under_rid,
-    click_if_exists,
+    exists,
     is_uiagent_installed,
-    swipe,
     wait_exists,
-    wait_exists_rid,
     wait_then_click,
 )
-from SemcCameraUI.tools_Common.test_camera.uiagent_instrumentation_client import (  # noqa: E402
+from uiagent_instrumentation_client import (  # noqa: E402
     UiAgentInstrumentationClient,
 )
 from SemcCameraUI.tools_Common.adb import Adb  # noqa: E402
@@ -74,23 +73,6 @@ def ensure_uiagent_available() -> None:
     install_uiagent()
 
 
-def click_camera_mode(*, pick: str) -> bool:
-    """
-    切換 Sony 相機模式（拍照 / 錄影）。
-
-    pick:
-      - "left"  → 拍照模式
-      - "right" → 錄影模式
-    """
-    rid = "com.sonyericsson.android.camera:id/application_navigator"
-    wait_exists_rid(rid=rid)
-    return click_child_under_rid(
-        rid=rid,
-        pick=pick,
-        index=0,
-    )
-
-
 def ensure_uiagent_accessibility_or_prompt() -> None:
     component = UIAGENT_ACCESSIBILITY_COMPONENT
 
@@ -119,7 +101,7 @@ def ensure_uiagent_accessibility_or_prompt() -> None:
 
 def launch_camera() -> None:
     """Launch the stock Sony camera app so we can interact with its UI."""
-    print("啟動相機應用程式...")
+    print("啟動相機應用程式...\n")
     ADB.shell(
         "am start -a android.media.action.STILL_IMAGE_CAMERA -p com.sonyericsson.android.camera",
         check=True,
@@ -128,19 +110,6 @@ def launch_camera() -> None:
 
 
 def parse_args() -> argparse.Namespace:
-    def mode_mapping(value):
-        # 定義縮寫與完整名稱的對應表
-        mapping = {
-            "p": "photo",
-            "v": "video",
-            "s": "slow_motion",
-            "sm": "slow_motion",
-            "t": "test_t",
-            "st": "photo_settings",
-        }
-        # 如果輸入在對應表中，回傳完整名稱；否則回傳原值讓 choices 檢查
-        return mapping.get(value.lower(), value)
-
     parser = argparse.ArgumentParser(
         description="Automate taking a photo with the stock camera app."
     )
@@ -158,6 +127,19 @@ def parse_args() -> argparse.Namespace:
         type=str,
         help="Specify the device serial number to connect to (optional).",
     )
+
+    def mode_mapping(value):
+        # 定義縮寫與完整名稱的對應表
+        mapping = {
+            "p": "photo",
+            "v": "video",
+            "s": "slow_motion",
+            "sm": "slow_motion",
+            "st": "photo_settings",
+        }
+        # 如果輸入在對應表中，回傳完整名稱；否則回傳原值讓 choices 檢查
+        return mapping.get(value.lower(), value)
+
     parser.add_argument(
         "--mode",
         "-m",
@@ -166,7 +148,37 @@ def parse_args() -> argparse.Namespace:
         nargs="+",  # 關鍵：允許輸入多個值，結果會存為 list
         choices=["photo", "video", "slow_motion", "photo_settings"],
         default=["photo", "video", "slow_motion", "photo_settings"],
-        help="測試模式 (可多選): photo (p), video (v), slow_motion (s), photo_settings (st) (預設: photo video)",
+        help="測試模式 (可多選): photo (p), video (v), slow_motion (s), photo_settings (st), photo_stability (ps) (預設: photo video)",
+    )
+
+    def positive_int(value):
+        ivalue = int(value)
+        if ivalue < 1:
+            raise argparse.ArgumentTypeError("次數必須 >= 1")
+        return ivalue
+
+    parser.add_argument(
+        "--count",  # 長參數
+        "-n",  # 短參數
+        dest="count",  # 存放在 args.count
+        type=positive_int,
+        default=1,
+        help="測試運行次數 (>=1，預設: 1)",
+    )
+    parser.add_argument(
+        "--force_stop",  # 長參數
+        "-f",  # 短參數
+        dest="force_stop",  # 存放在 args.force_stop
+        default=False,
+        action="store_true",
+        help="強制停止相機應用程式 (預設: False)",
+    )
+    parser.add_argument(
+        "--interval",
+        "-t",
+        type=float,
+        default=0,
+        help="每次測試之間的間隔秒數，預設 0 秒",
     )
     return parser.parse_args()
 
@@ -181,18 +193,18 @@ def ensure_uiagent_ready() -> None:
     ensure_uiagent_accessibility_or_prompt()  # 確認無障礙服務已啟用
 
 
-def reset_camera_state(click_targets: Iterable[ClickTarget]) -> None:
+def reset_camera_state() -> None:
     print(f"清除 {CAMERA_PACKAGE_NAME} 的資料...")
     ADB.shell(f"pm clear {CAMERA_PACKAGE_NAME}", check=False)
 
-    launch_camera()
+
+def handle_permission_dialog():
+    """處理相機權限彈窗，嘗試點擊允許"""
 
     print("嘗試處理權限彈窗（按下允許）...")
-    # 使用 UiAgentInstrumentationClient 方式
     client = UiAgentInstrumentationClient()
     client.start_instrumentation_service(background=True)
     try:
-        # 等待權限對話框出現（最多 8 秒）
         deadline = time.monotonic() + 4
         while time.monotonic() < deadline:
             if client.exists_rid(
@@ -211,37 +223,48 @@ def reset_camera_state(click_targets: Iterable[ClickTarget]) -> None:
 
         for _ in range(5):
             if client.click_permission_button("allow_foreground"):
-                time.sleep(0.4)
                 continue
             if client.click_permission_button("allow_once"):
-                time.sleep(0.4)
                 continue
             if client.click_rid(
                 "com.android.permissioncontroller:id/permission_allow_button"
             ):
-                time.sleep(0.4)
                 continue
             client.click_text("允許", exact=False)
             client.click_text("允許檔案存取", exact=False)
-            time.sleep(0.4)
     finally:
-        client.stop_instrumentation_service()
+        # 非同步停止
+        threading.Thread(
+            target=client.stop_instrumentation_service, daemon=True
+        ).start()
 
 
-def stop_camera() -> None:
-    ADB.shell(f"am force-stop {CAMERA_PACKAGE_NAME}", check=False)
-    # 同時停止 cameracommon，確保清除緩存的 cacao 會話狀態
-    ADB.shell("am force-stop com.sonymobile.cameracommon", check=False)
-    import time
+def stop_camera(force_stop=False) -> None:
+    print("停止相機應用程式...")
+    if force_stop:
+        clear_all_task_stacks()
+    else:
+        ADB.shell(f"am force-stop {CAMERA_PACKAGE_NAME}", check=False)
+    time.sleep(0.5)  # 等待 CacaoService 清理 client session
 
-    time.sleep(1)  # 等待 CacaoService 清理 client session
 
+def clear_all_task_stacks() -> None:
+    """清理所有後台 task stack"""
+    result = ADB.shell("am stack list", check=False)
+    stdout = (result.stdout or "").strip()
 
-def is_camera_running() -> bool:
-    """檢查相機app是否還在運行。"""
-    result = ADB.shell(f"pidof {CAMERA_PACKAGE_NAME}", check=False)
-    if not bool(result.stdout and result.stdout.strip()):
-        sys.exit("⚠️ 無法檢測到相機app，請檢查是否閃退或未啟動。")
+    if not stdout:
+        return
+
+    # 解析 taskId= 的值
+    task_ids = re.findall(r"taskId=(\d+)", stdout)
+
+    if not task_ids:
+        return
+
+    # 移除每個 task stack
+    for task_id in task_ids:
+        ADB.shell(f"am stack remove {task_id}", check=False)
 
 
 def get_dcim_file_count() -> int:
@@ -260,117 +283,96 @@ def get_dcim_file_count() -> int:
 def has_saved(timeout_ms: int = 3000, interval_ms: int = 200) -> bool:
     """檢查 DCIM 是否新增檔案，每次掃描都印出數量，找到新檔案就 True"""
     global file_count
-
+    print(f"當前 DCIM 檔案數量: {file_count}")
     deadline = time.monotonic() + timeout_ms / 1000
     success = False
 
     while time.monotonic() < deadline:
         new_count = get_dcim_file_count()
-        print(f"當前 DCIM 檔案數量: {new_count}")
 
         if new_count > file_count:
             file_count = new_count
             success = True
-            break  # 找到新檔案就算成功
-
+            print(f"當前 DCIM 檔案數量: {new_count}")
+            break
         time.sleep(interval_ms / 1000)
 
     return success
 
 
-def _check_ready_and_saved(click_map, save_timeout=3000) -> bool:
-    """檢查模式是否恢復 + 檔案是否儲存，每次都掃描，結果有一次失敗就 False"""
-    ready = wait_exists(click_map["模式"], timeout_ms=5000)
-    print(f"模式按鈕恢復: {'✓' if ready else '✗'}")
+def click_camera_mode(click_map, *, mod: str) -> bool:
+    """
+    切換 Sony 相機模式（拍照 / 錄影）。
 
-    saved = has_saved(timeout_ms=save_timeout)
-    result = ready and saved
+    mod:
+      - "p" → 拍照模式
+      - "v" → 錄影模式
+    """
+    pick_map = {
+        "p": "left",
+        "v": "right",
+    }
+    pick = pick_map.get(mod.lower(), mod)
 
-    print(f"檢查結果: {result}")
-    return result
+    滑塊 = click_map["錄影拍照滑塊"]
+    if not wait_exists(滑塊, timeout_ms=2000):
+        if exists(click_map["關閉色彩和亮度調整"]):
+            click(click_map["關閉色彩和亮度調整"])
+        else:
+            open_settings(click_map)
+            if wait_exists(click_map["慢動作模式"], timeout_ms=1000):
+                wait_then_click(click_map["模式"], timeout_ms=2000)
+    time.sleep(0.1)
+    return click_child_under_rid(
+        rid=滑塊.resource_id,
+        pick=pick,
+        index=0,
+    )
+
+
+def open_settings(click_map):
+    print("點擊設定...")
+    wait_then_click(click_map["設定"], timeout_ms=2000)
+    time.sleep(0.5)
 
 
 def test_photo(click_map) -> bool:
     """拍照測試流程"""
-    print("\n========== 開始拍照測試 ==========")
-    global file_count
-
-    click_camera_mode(pick="left")
+    print("切到拍照模式...")
+    click_camera_mode(click_map, mod="p")  # 切到拍照模式
 
     print("拍照中...")
-    t_start = time.monotonic()
-
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
-    result = _check_ready_and_saved(click_map)
-
-    capture_latency_ms = (time.monotonic() - t_start) * 1000
-
-    print(f"拍照結果: {result}")
-    print(f"📊 拍照延遲: {capture_latency_ms:.0f}ms (快門到儲存完成)")
-    print("========== 拍照測試完成 ==========")
-
-    return result
 
 
 def test_video(click_map) -> bool:
     """錄影測試流程"""
-    print("\n========== 開始錄影測試 ==========")
-    global file_count
-
     print("切到錄影模式...")
-    click_camera_mode(pick="right")
-    time.sleep(1)
+    click_camera_mode(click_map, mod="v")  # 切到錄影模式
 
+    time.sleep(1)
     print("開始錄影...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
 
     time.sleep(7)
-
     print("停止錄影...")
-    t_start = time.monotonic()
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
-
-    result = _check_ready_and_saved(click_map)
-    elapsed_ms = (time.monotonic() - t_start) * 1000
-
-    print(f"錄影結果: {result}")
-    print(f"📊 錄影總耗時 (含儲存): {elapsed_ms:.0f}ms")
-
-    return result
 
 
 def test_slow_motion(click_map) -> bool:
     """慢動作測試流程"""
-    print("\n========== 開始慢動作測試 ==========")
-    global file_count
-
     print("切到慢動作模式...")
     wait_then_click(click_map["模式"], timeout_ms=2000)
     wait_then_click(click_map["慢動作"], timeout_ms=5000)
-
     time.sleep(0.5)
-
-    wait_then_click(click_map["設定"], timeout_ms=2000)
-    wait_then_click(click_map["慢動作模式"], timeout_ms=2000)
+    open_settings(click_map)
+    if not wait_then_click(click_map["慢動作模式"], timeout_ms=2000):
+        print("❌ 慢動作模式不存在，程式終止。")
+        return
     wait_then_click(click_map["慢動作僅一次"], timeout_ms=2000)
 
     print("第一次慢動作拍攝中...")
     wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
-
-    result = _check_ready_and_saved(click_map)
-
-    print(f"第一次慢動作拍攝結果: {result}")
-
-    print("第二次慢動作拍攝中...")
-    wait_then_click(click_map["拍照鍵"], timeout_ms=5000)
-
-    result = _check_ready_and_saved(click_map)
-
-    print(f"第二次慢動作拍攝結果: {result}")
-
-    print("========== 慢動作測試完成 ==========")
-
-    return result
 
 
 # def test_t(click_map) -> bool:
@@ -392,42 +394,25 @@ def test_slow_motion(click_map) -> bool:
 
 def test_photo_settings(click_map) -> bool:
     """測試拍照設定是否存在"""
-    print("\n========== 開始測試設定選項 ==========")
-
-    SLEEP_SHORT = 0.5  # 短暫等待時間
-
-    if not wait_exists(click_map["錄影拍照切換"], timeout_ms=2000):
-        wait_then_click(click_map["模式"], timeout_ms=2000)
-
-    # 確保在拍照模式
-    click_camera_mode(pick="left")  # 切到拍照模式
-    wait_exists(click_map["模式"], timeout_ms=5000)
-
-    # 點擊設定按鈕
-    def open_settings():
-        print("點擊設定...")
-        wait_then_click(click_map["設定"], timeout_ms=2000)
-        time.sleep(SLEEP_SHORT)
-
-    open_settings()
+    click_camera_mode(click_map, mod="p")  # 切到拍照模式
+    open_settings(click_map)  # 點擊設定按鈕
 
     # 所有設定選項清單
     settings_check = [
-        ("靜態影像尺寸", click_map.get("靜態影像尺寸")),
-        ("預拍功能", click_map.get("預拍功能")),
-        ("物件追蹤", click_map.get("物件追蹤")),
-        ("自動拍攝", click_map.get("自動拍攝")),
-        ("失真校正", click_map.get("失真校正")),
+        ("靜態影像尺寸", click_map["靜態影像尺寸"]),
+        ("預拍功能", click_map["預拍功能"]),
+        ("物件追蹤", click_map["物件追蹤"]),
+        ("自動拍攝", click_map["自動拍攝"]),
+        ("失真校正", click_map["失真校正"]),
     ]
 
     result = True
-
     for name, target in settings_check:
         exists = wait_exists(target, timeout_ms=1500)
 
         if name == "靜態影像尺寸" and not exists:
             print("再次嘗試點擊設定...")
-            open_settings()
+            open_settings(click_map)
             exists = wait_exists(target, timeout_ms=1500)
 
         print(f"  {name}\t: {'✓ 存在' if exists else '✗ 不存在'}")
@@ -435,11 +420,121 @@ def test_photo_settings(click_map) -> bool:
         if not exists:
             result = False
 
-    open_settings()  # 關閉設定
+    open_settings(click_map)  # 關閉設定
 
-    print(f"設定選項測試結果: {result}")
-    print("========== 測試設定選項完成 ==========")
+    return result
 
+
+def check_camera_running() -> None:
+    """
+    檢查相機是否正在運行。
+    若未運行則直接退出程式。
+    """
+    result = ADB.shell(f"pidof {CAMERA_PACKAGE_NAME}", check=False)
+    if not bool(result.stdout and result.stdout.strip()):
+        raise RuntimeError("無法檢測到相機app正在運行 ❌")
+
+
+def check_camera_ui(click_map, *, timeout_ms=6000) -> None:
+    """
+    同時非阻塞等待錯誤對話框與模式按鈕。
+    發現錯誤先記錄，最後統一處理。
+    """
+    errors = []
+    start_time = time.time()
+    timeout_s = timeout_ms / 1000.0
+
+    found_error = False
+    found_mode = False
+
+    while time.time() - start_time < timeout_s:
+        # 檢查錯誤對話框
+        if not found_error and wait_exists(click_map["錯誤"], timeout_ms=0):
+            errors.append("發現錯誤對話框，程式終止 ❌")
+            found_error = True
+
+        # 檢查模式按鈕
+        if not found_mode and wait_exists(click_map["模式"], timeout_ms=0):
+            found_mode = True
+
+        # 如果兩個都檢查完，就提前結束迴圈
+        if found_error and found_mode:
+            break
+
+    # 超時後仍未找到模式按鈕
+    if not found_mode:
+        errors.append("模式按鈕未出現，UI 可能未回覆或初始化異常，程式終止 ❌")
+
+    if errors:
+        raise RuntimeError(f"\n{'\n'.join(errors)}")
+
+
+def get_click_map():
+    key_path = Path(__file__).parent / "key.json"  # load keys
+    click_targets = load_click_targets(key_path)  # load click targets
+    click_map = {ct.key_name: ct for ct in click_targets}
+    return click_map
+
+
+def countdown(total_seconds):
+    while total_seconds > 0:
+        print(f"等待{total_seconds:.1f} 秒", end="\r")
+        time.sleep(0.1)  # 固定每 0.1 秒
+        total_seconds -= 0.1
+
+
+def run_camera_test_flow(args, tests, click_map):
+    if args.clear_data:
+        reset_camera_state()
+    stop_camera(args.force_stop)  # 停止相機應用程式
+    launch_camera()  # 啟動相機應用程式
+
+    if args.clear_data:
+        handle_permission_dialog()  # 處理權限彈窗
+
+    # 手動啟動相機會出現 "儲存地點否" 腳本啟動相機不會出現。
+
+    try:
+        check_camera_running()
+        check_camera_ui(click_map, timeout_ms=2000)
+    except RuntimeError as e:
+        print(f"初始化失敗: {e}")
+        return False
+    
+    for mode in args.mode:
+        result = True
+        cfg = tests[mode]
+        print(f"========== 開始{cfg['name']}測試 ========== ")
+        try:
+            t_start = time.monotonic()
+
+            test_ok = cfg["func"](click_map)
+            if cfg["check_saved"]:  # photo_settings 模式不測試儲存
+                result = has_saved()
+            else:
+                result = test_ok
+
+            elapsed = time.monotonic() - t_start
+            label = "儲存" if cfg["check_saved"] else ""
+            if result:
+                print(f"{label}結果: ✅ (耗時: {elapsed:.2f}s)")
+            else:
+                raise RuntimeError(f"{label}結果: ❌")
+        except RuntimeError as e:
+            print(f"模式 {mode} {e}")
+            result = False
+
+        try:
+            check_camera_running()
+            check_camera_ui(click_map)
+        except RuntimeError as e:
+            print(f"模式 {mode} {e}")
+            result = False
+
+        print(f"========== 結束 {cfg['name']} 測試 ==========")
+        if not result:
+            return False
+    
     return result
 
 
@@ -453,60 +548,48 @@ def main() -> None:
     uiagent_client.ADB = ADB
     uiagent_instrumentation_client.ADB = ADB
 
-    key_path = Path(__file__).parent / "key.json"  # load keys
-    click_targets = load_click_targets(key_path)  # load click targets
-    click_targets_map = {ct.key_name: ct for ct in click_targets}
+    tests = {
+        "photo": {
+            "func": test_photo,
+            "name": "拍照",
+            "check_saved": True,
+        },
+        "video": {
+            "func": test_video,
+            "name": "錄影",
+            "check_saved": True,
+        },
+        "photo_settings": {
+            "func": test_photo_settings,
+            "name": "拍照設定選項",
+            "check_saved": False,
+        },
+        "slow_motion": {
+            "func": test_slow_motion,
+            "name": "慢動作",
+            "check_saved": True,
+        },
+    }
 
+    click_map = get_click_map()
     ensure_uiagent_ready()  # 確認 UiAgent 已安裝且無障礙服務已啟用
-    stop_camera()  # 停止相機應用程式
+    # stop_camera(args.force_stop)  # 停止相機應用程式
     prepare_device()  # 喚醒並解鎖裝置
-    if args.clear_data:
-        reset_camera_state(click_targets)
-    else:
-        launch_camera()
-
-    # 等待並點擊 SetupWizard 的「否」按鈕（如果存在）
-    # wait_exists(click_targets_map["儲存地點否"], timeout_ms=500)
-    click_if_exists(click_targets_map["儲存地點否"])
-
-    # [PERF] 測量相機啟動到 UI 就緒的時間
-    t_launch = time.monotonic()
-    ready = wait_exists(
-        click_targets_map["模式"], timeout_ms=7000
-    )  # 等待模式按鈕出現，代表相機已準備好
-    t_ready = time.monotonic()
-    startup_ms = (t_ready - t_launch) * 1000
-    print(
-        f"📊 相機啟動到 UI 就緒: {startup_ms:.0f}ms (模式按鈕出現{'✓' if ready else '✗'})"
-    )
-
-    if not ready:
-        print("⚠️ 相機 UI 未就緒，模式按鈕未出現。")
-
 
     file_count = get_dcim_file_count()  # 記錄 /sdcard/DCIM/  檔案數量
     print(f"當前 DCIM 檔案數量: {file_count}")
-    # 根據模式選擇測試流程
-    result = True
 
-    tests = {
-        "photo": test_photo,
-        "video": test_video,
-        "photo_settings": test_photo_settings,
-        "slow_motion": test_slow_motion,
-    }
+    n = args.count
+    for n in range(args.count):
+        print("-" * 10, "開始第", n + 1, "輪測試", "-" * 10)
+        if not run_camera_test_flow(args, tests, click_map):
+            print(f"第 {n + 1} 輪測試結果: 失敗 ❌ ")
+            sys.exit(1)
+        print(f"第 {n + 1} 輪測試結果: 通過 ✅ ")
+        print()
+        countdown(args.interval)
 
-    for mode in args.mode:
-        if result and mode in tests:
-            is_camera_running()
-            result = tests[mode](click_targets_map)
-            print()
-
-    print("\n測試結果: " + ("✅ 全部通過" if result else "❌ 有項目失敗"))
-    # if not result:
-    #     pass
-    # click_targets_map("無法啟動相機")
-    # stop_camera()  # 停止相機應用程式
+    print("🎉 所有測試完成，結果: 通過 ✅ ")
 
 
 if __name__ == "__main__":

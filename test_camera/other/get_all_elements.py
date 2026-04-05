@@ -11,12 +11,11 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Optional
 
-ROOT = Path(__file__).resolve().parents[4]
+ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from SemcCameraUI.tools_Common.test_camera.uiagent_client import (  # noqa: E402
+from SemcCameraUI.test_camera.uiagent_client import (  # noqa: E402
     is_uiagent_installed,
     list_rids,
     list_all_elements,

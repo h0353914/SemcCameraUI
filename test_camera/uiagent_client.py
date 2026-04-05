@@ -10,7 +10,7 @@ from typing import Optional
 ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT))
 
-from SemcCameraUI.tools_Common.test_camera.key import ClickTarget  # noqa: E402
+from SemcCameraUI.test_camera.key import ClickTarget  # noqa: E402
 from SemcCameraUI.tools_Common.adb import Adb  # noqa: E402
 
 ADB = Adb()

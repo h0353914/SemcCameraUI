@@ -238,3 +238,32 @@ class Adb:
         p = self.run(["devices"], timeout=timeout, check=check)
         self._print_result(p)
         return p
+
+    def get_device_serials(
+        self,
+        *,
+        timeout: int = 10,
+    ) -> list[str]:
+        p = self.devices(timeout=timeout)
+        serials: list[str] = []
+        device_lines = [
+            ln.strip()
+            for ln in p.stdout.splitlines()
+            if ln.strip() and not ln.lower().startswith("list of devices")
+        ]
+
+        for ln in device_lines:
+            parts = ln.split("\t")
+            if parts:
+                serial = parts[0].strip()
+                if serial:
+                    serials.append(serial)
+        return serials
+
+    def sha1sum(self, remote_path: str) -> str:
+        """在裝置上計算檔案的 SHA1（使用 `sha1sum` 命令）"""
+        p = self.shell(f"sha1sum {remote_path}", check=False)
+        if p.returncode != 0:
+            return ""
+        # sha1sum 輸出格式：<sha1>  /<path>
+        return p.stdout.strip().split()[0]

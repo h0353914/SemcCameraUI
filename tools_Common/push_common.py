@@ -63,7 +63,9 @@ def _push_with_su(
     # 步驟2: 使用 su 重新掛載 /system 為可寫
     print("Remounting /system as writable with su")
     try:
-        remount_cmd = "su -c 'mount -o rw,remount,rw /system || mount -o rw,remount,rw /'"
+        remount_cmd = (
+            "su -c 'mount -o rw,remount,rw /system || mount -o rw,remount,rw /'"
+        )
         result = adb.shell(remount_cmd, check=False)
         if result.returncode != 0 and result.stderr:
             print(f"Warning: Remount may have failed: {result.stderr.strip()}")
@@ -101,21 +103,57 @@ def _push_with_su(
 
 
 def push(
-    local_source: str | Path,
-    remote_destination: str,
+    local_source: str | Path | list[str | Path],
+    remote_destination: str | list[str],
     *,
     adb: Adb | None = None,
     device_serial: str | None = None,
 ):
+    """
+    推送單個或多個執行檔案到裝置。
+
+    Args:
+        local_source: 單個檔案路徑或路徑清單
+        remote_destination: 對應的遠端目標路徑或路徑清單
+        adb: Adb 實例（可選）
+        device_serial: 設備序號（可選）
+
+    Raises:
+        FileNotFoundError: 如果本地檔案不存在
+        RuntimeError: 如果推送失敗
+    """
     if device_serial:
         adb_client = Adb(serial=device_serial)
     else:
         adb_client = adb or DEFAULT_ADB
-    local_path = Path(local_source)
-    if not local_path.exists():
-        raise FileNotFoundError(f"{local_path} does not exist")
 
-    # 偵測是否為 userdebug 模式
+    # 規範化至清單格式
+    if isinstance(local_source, (str, Path)):
+        sources = [Path(local_source)]
+        destinations = (
+            [remote_destination]
+            if isinstance(remote_destination, str)
+            else remote_destination
+        )
+    else:
+        sources = [Path(s) for s in local_source]
+        destinations = (
+            remote_destination
+            if isinstance(remote_destination, list)
+            else [remote_destination]
+        )
+
+    # 檢查檔案存在且路徑配對
+    for src in sources:
+        if not src.exists():
+            raise FileNotFoundError(f"{src} does not exist")
+
+    if len(sources) != len(destinations):
+        raise ValueError(
+            f"Mismatch: {len(sources)} sources but {len(destinations)} destinations"
+        )
+
+    # 偵測是否為 userdebug 模式（只需偵測一次）
     is_userdebug = _is_userdebug(adb_client)
 
     if is_userdebug:
@@ -129,19 +167,23 @@ def push(
         print("Executing: remount")
         adb_client.remount(check=False)
 
-        print(f"Executing: push {local_path} {remote_destination}")
-        adb_client.push(str(local_path), remote_destination, check=False)
+        # 推送所有檔案
+        for local_path, remote_path in zip(sources, destinations):
+            print(f"Executing: push {local_path} {remote_path}")
+            adb_client.push(str(local_path), remote_path, check=False)
     else:
         # user 模式：使用 su 推送
-        print("Device is not userdebug, using su to push file")
+        print("Device is not userdebug, using su to push files")
         print("Executing: devices")
         adb_client.devices(check=False)
 
-        success = _push_with_su(adb_client, local_path, remote_destination)
-        if not success:
-            raise RuntimeError(
-                f"Failed to push {local_path} to {remote_destination} using su"
-            )
+        # 推送所有檔案
+        for local_path, remote_path in zip(sources, destinations):
+            success = _push_with_su(adb_client, local_path, remote_path)
+            if not success:
+                raise RuntimeError(
+                    f"Failed to push {local_path} to {remote_path} using su"
+                )
 
 
 def push_apk(
@@ -198,6 +240,51 @@ def push_so(
     remote_path = f"{remote_base.rstrip('/')}/{lib_name}"
 
     push(local_path, remote_path, adb=adb, device_serial=device_serial)
+
+
+def push_so_list(
+    lib_names: list[str],
+    arch: str = "lib64",
+    *,
+    local_paths: list[str | Path] | None = None,
+    remote_dir: str | None = None,
+    adb: Adb | None = None,
+    device_serial: str | None = None,
+):
+    """
+    推送多個 .so 到裝置。
+
+    Args:
+        lib_names: .so 檔名清單
+        arch: 架構（'lib' 或 'lib64'）
+        local_paths: 本地路徑清單（若為 None 使用預設的 OUT_SO_DIR）
+        remote_dir: 遠端目錄
+        adb: Adb 實例
+        device_serial: 設備序號
+    """
+    if arch not in ("lib", "lib64"):
+        raise ValueError("arch must be either 'lib' or 'lib64'")
+
+    # 決定本地路徑
+    if local_paths is None:
+        local_paths_list = [OUT_SO_DIR / arch / lib_name for lib_name in lib_names]
+    else:
+        if len(local_paths) != len(lib_names):
+            raise ValueError(
+                f"Mismatch: {len(lib_names)} lib_names but {len(local_paths)} local_paths"
+            )
+        local_paths_list = [Path(p) for p in local_paths]
+
+    # 確認所有檔案存在
+    for path in local_paths_list:
+        if not path.exists():
+            raise FileNotFoundError(f"{path} does not exist")
+
+    # 決定遠端路徑
+    remote_base = remote_dir or (ADB_LIB64_DIR if arch == "lib64" else ADB_LIB_DIR)
+    remote_paths = [f"{remote_base.rstrip('/')}/{lib_name}" for lib_name in lib_names]
+
+    push(local_paths_list, remote_paths, adb=adb, device_serial=device_serial)
 
 
 def copy_compiled_file(

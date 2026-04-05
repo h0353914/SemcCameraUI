@@ -38,10 +38,16 @@ log_path = "/tmp/camera.log"
 
 ```
 SemcCameraUI/
- ├─ .tmp/                 # 所有 log 與暫存檔
+ ├─ .tmp/                      # 所有 log 與暫存檔
  ├─ tools_Common/
- │   └─ adb.py            # ADB 封裝
- ├─ test_camera.py        # 基礎測試腳本
+ │  └─ adb.py                  # ADB 封裝
+ ├─ test_camera/
+ │  └─ test_camera.py          # 測試腳本
+ ├─ tools_Libcacao/
+ │  ├─ build_push_libcacao.py  # Libcacao編譯腳本 
+ │  └─ refs/             
+ │     ├─ so_32/               # 原版so(32)
+ │     └─ so_64/               # 原版so(64) 
 ```
 
 ---
@@ -103,10 +109,3 @@ curl -X POST http://172.18.48.1:8091/run_analysis
 3. 專案既有程式碼
 4. 新生成程式碼
 
-# 10. 修改方法
-1.檢查目前變更是否與原版一致
-2.修復到 test_camera.py -d QV70A5XA11  -c 能通過
-
-QV700WMR11 編譯機
-QV70A5XA11 參考機 
-多使用 Ghidra MCP

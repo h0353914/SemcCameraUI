@@ -24,7 +24,7 @@ import time
 from pathlib import Path
 from typing import Optional
 
-ROOT = Path(__file__).resolve().parents[3]
+ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from SemcCameraUI.tools_Common.adb import Adb  # noqa: E402
@@ -36,7 +36,9 @@ class UiAgentInstrumentationClient:
     """UiAgent Instrumentation 客戶端"""
 
     INSTRUMENTATION_PACKAGE = "com.example.uiagent.uiautomation.test"
-    INSTRUMENTATION_CLASS = "com.example.uiagent.uiautomation.test.UiAutomationInstrumentation"
+    INSTRUMENTATION_CLASS = (
+        "com.example.uiagent.uiautomation.test.UiAutomationInstrumentation"
+    )
     INSTRUMENTATION_RUNNER = "androidx.test.runner.AndroidJUnitRunner"
     ACTION_CMD = "com.example.uiagent.uiautomation.UIAUTOMATION_CMD"
 
@@ -275,7 +277,9 @@ def main():
             elements = client.list_elements()
             print(f"找到 {len(elements)} 個元素：")
             for i, elem in enumerate(elements, 1):
-                print(f"  {i}. rid={elem.get('rid', '')} text={elem.get('text', '')} desc={elem.get('desc', '')}")
+                print(
+                    f"  {i}. rid={elem.get('rid', '')} text={elem.get('text', '')} desc={elem.get('desc', '')}"
+                )
 
         elif args.command == "find_buttons":
             buttons = client.find_permission_buttons()

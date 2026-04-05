@@ -48,11 +48,10 @@
     "resource_id": "com.sonyericsson.android.camera:id/text",
     "text": "失真校正"
   },
-  "錄影拍照切換": {
+  "錄影拍照滑塊": {
     "resource_id": "com.sonyericsson.android.camera:id/application_navigator"
   },
-  "無法啟動相機": {
-    "text": "無法啟動相機。請重新啟動相機或裝置。",
-    "resource_id": "android:id/message"
+  "錯誤": {
+    "resource_id": "android:id/alertTitle"
   }
 }

@@ -12,15 +12,15 @@
             "console": "integratedTerminal"
         },
         {
-            "name": "Python st c",
+            "name": "Python test",
             "type": "debugpy",
             "request": "launch",
-            "program": "tools_Common/test_camera/test_camera.py",
+            "program": "test_camera/test_camera.py",
             "console": "integratedTerminal",
             "args": [
-                "-m",
-                "st",
-                // "-c",
+                // "-m",
+                // "s",
+                "-f",
                 // "--device",
                 // "QV700WMR11"
             ]
