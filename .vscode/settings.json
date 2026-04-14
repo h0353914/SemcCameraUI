@@ -1,0 +1,11 @@
+{
+  "chat.mcp.serverSampling": {
+    "servers": {
+      "ghidra-mcp": {
+        "command": "python",
+        "args": ["ghidra/ghidra-mcp/bridge_mcp_ghidra.py"],
+        "transport": "stdio"
+      }
+    }
+  }
+}
