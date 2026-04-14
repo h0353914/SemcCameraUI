@@ -35,3 +35,7 @@
 [submodule "ghidra/ghidra-mcp"]
 	path = ghidra/ghidra-mcp
 	url = https://github.com/bethington/ghidra-mcp
+
+[submodule "Libcacao"]
+	path = Libcacao
+	url = https://github.com/h0353914/libcacao_wrappers
