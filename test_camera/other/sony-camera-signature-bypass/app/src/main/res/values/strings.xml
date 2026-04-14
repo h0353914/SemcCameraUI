@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Global Signature Bypass</string>
+    <string name="xposed_description">全域簽名與 IMAGE_PROCESSOR 權限繞過\n影響所有應用的簽名檢查，請僅用於開發測試環境</string>
+    
+    <string-array name="xposed_scope">
+        <item>android</item>
+    </string-array>
+</resources>
