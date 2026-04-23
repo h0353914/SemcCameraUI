@@ -1,0 +1,77 @@
+{
+  "設定": "com.sonyericsson.android.camera:id/contextual_setting_shortcut",
+  "拍照鍵": "com.sonyericsson.android.camera:id/main_button",
+  "使用期間允許": "com.android.permissioncontroller:id/permission_allow_foreground_only_button",
+  "允許一次": "com.android.permissioncontroller:id/permission_allow_one_time_button",
+  "允許檔案存取": "com.android.permissioncontroller:id/permission_allow_button",
+  "全部允許": "com.android.permissioncontroller:id/permission_allow_all_button",
+  "模式": "com.sonyericsson.android.camera:id/mode_button_shortcut",
+  "模式列": "com.sonyericsson.android.camera:id/mode_icons",
+  "慢動作": {
+    "resource_id": "com.sonyericsson.android.camera:id/selector_app_name_label",
+    "text": "慢動作"
+  },
+  "慢動作模式選單": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "慢動作模式"
+  },
+  "切換鏡頭": "com.sonyericsson.android.camera:id/primary_shortcut_facing",
+  "手動模式": {
+    "resource_id": "com.sonyericsson.android.camera:id/selector_app_name_label",
+    "text": "手動"
+  },
+  "手動模式_設定列": "com.sonyericsson.android.camera:id/sub_button",
+  "resource_id": "com.sonyericsson.android.camera:id/selector_app_name_label",
+  "慢動作僅一次": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "超級慢(僅限一次)"
+  },
+  "超級慢動作": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "超級慢動作"
+  },
+  "色彩和亮度": "com.sonyericsson.android.camera:id/primary_shortcut_semi_auto",
+
+  "靜態影像尺寸": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "靜態影像尺寸"
+  },
+  "預拍功能": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "預拍功能"
+  },
+  "物件追蹤": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "物件追蹤"
+  },
+  "自動拍攝": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "自動拍攝"
+  },
+  "失真校正": {
+    "resource_id": "com.sonyericsson.android.camera:id/text",
+    "text": "失真校正"
+  },
+
+  "錯誤": {
+    "resource_id": "android:id/alertTitle"
+  },
+  "錯誤確定": {
+    "resource_id": "android:id/button1"
+  },
+  "一般設定": {
+    "text": "一般設定"
+  },
+  "跳過教學": "com.sonyericsson.android.camera:id/page_tutorial_skip_button",
+  "知道了": "com.sonyericsson.android.camera:id/page_tutorial_gotit_button",
+  "儲存地點否": "com.sonyericsson.android.camera:id/tutorial_no_button",
+
+  
+  "目前慢動作模式": {
+    "resource_id": "com.sonyericsson.android.camera:id/hint_text_message"
+  },
+  "返回拍照": {
+    "rid": "com.sonyericsson.android.camera:id/mode_button_shortcut",
+    "desc": "上一個"
+  }
+}

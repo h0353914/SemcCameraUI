@@ -4,7 +4,9 @@ import json
 import re
 import sys
 from pathlib import Path
+import time
 from typing import Optional
+from contextlib import contextmanager
 
 ROOT = Path(__file__).resolve().parents[1]  # /home/h/lineageos/device/sony/SemcCameraUI
 TEST_CAMERA_DIR = Path(__file__).resolve().parent  # /SemcCameraUI/test_camera
@@ -14,18 +16,314 @@ sys.path.insert(0, str(TEST_CAMERA_DIR))
 from tools_Common.adb import Adb  # noqa: E402
 from key import ClickTarget  # noqa: E402
 
-timeout_ms: int = 3000
+TIMEOUT: int = 5000
 
 
 # ------------------------------------------------------------
 # 自定義例外類別
 # ------------------------------------------------------------
-class WaitTargetNotFoundError(Exception):
-    pass
+class WaitTargetNotFoundError(Exception): ...
 
 
-class ClickFailedError(Exception):
-    pass
+class ClickFailedError(Exception): ...
+
+
+class InvalidClickTargetError(Exception): ...
+
+
+# ------------------------------------------------------------
+# 低階 API（直接對 UiAgent 發送命令）
+# ------------------------------------------------------------
+def click_rid_desc(adb: Adb, rid: str, content_desc: str) -> bool:
+    """觸發 rid + content_desc 所對應元件的點擊事件"""
+    resp = _broadcast(adb, cmd="click_rid_content_desc", rid=rid, desc=content_desc)
+    return bool(resp.get("clicked", False))
+
+
+def click_rid_text(adb: Adb, rid: str, text: str) -> bool:
+    """觸發 rid + text 所對應元件的點擊事件"""
+    resp = _broadcast(adb, cmd="click_rid_text", rid=rid, text=text)
+    return bool(resp.get("clicked", False))
+
+
+def click_rid(adb: Adb, rid: str) -> bool:
+    """觸發 rid 所對應元件的點擊事件"""
+    resp = _broadcast(adb, cmd="click_rid", rid=rid)
+    return bool(resp.get("clicked", False))
+
+
+def click_text(adb: Adb, text: str) -> bool:
+    """觸發 text 所對應元件的點擊事件"""
+    resp = _broadcast(adb, cmd="click_text", text=text)
+    return bool(resp.get("clicked", False))
+
+
+def exists_rid_desc(adb: Adb, rid: str, content_desc: str) -> bool:
+    """查詢指定 rid + content_desc 的元件是否存在"""
+    resp = _broadcast(adb, cmd="exists_rid_content_desc", rid=rid, desc=content_desc)
+    return bool(resp.get("exists", False))
+
+
+def exists_rid_text(adb: Adb, rid: str, text: str) -> bool:
+    """查詢指定 rid + text 的元件是否存在"""
+    resp = _broadcast(adb, cmd="exists_rid_text", rid=rid, text=text)
+    return bool(resp.get("exists", False))
+
+
+def exists_rid(adb: Adb, rid: str) -> bool:
+    """查詢指定 rid 的元件是否存在"""
+    resp = _broadcast(adb, cmd="exists_rid", rid=rid)
+    return bool(resp.get("exists", False))
+
+
+def exists_text(adb: Adb, text: str) -> bool:
+    """查詢指定 text 的元件是否存在"""
+    resp = _broadcast(adb, cmd="exists_text", text=text)
+    return bool(resp.get("exists", False))
+
+
+def wait_exists_rid_desc(
+    adb: Adb, rid: str, content_desc: str, timeout_ms: int = TIMEOUT
+) -> bool:
+    """等待 rid + content_desc 元件出現，直到超時"""
+    resp = _broadcast(
+        adb,
+        cmd="wait_exists_rid_content_desc",
+        rid=rid,
+        desc=content_desc,
+        timeout_ms=timeout_ms,
+    )
+    return bool(resp.get("exists", False))
+
+
+def wait_exists_rid_text(
+    adb: Adb, rid: str, text: str, timeout_ms: int = TIMEOUT
+) -> bool:
+    """等待 rid + text 元件出現，直到超時"""
+    resp = _broadcast(
+        adb,
+        cmd="wait_exists_rid_text",
+        rid=rid,
+        text=text,
+        timeout_ms=timeout_ms,
+    )
+    return bool(resp.get("exists", False))
+
+
+def wait_exists_rid(adb: Adb, rid: str, timeout_ms: int = TIMEOUT) -> bool:
+    """等待 rid 元件出現，直到超時"""
+    resp = _broadcast(adb, cmd="wait_exists_rid", rid=rid, timeout_ms=timeout_ms)
+    return bool(resp.get("exists", False))
+
+
+def wait_exists_text(adb: Adb, text: str, timeout_ms: int = TIMEOUT) -> bool:
+    """等待 text 元件出現，直到超時"""
+    resp = _broadcast(adb, cmd="wait_exists_text", text=text, timeout_ms=timeout_ms)
+    return bool(resp.get("exists", False))
+
+
+def wait_not_exists_rid_desc(
+    adb: Adb, rid: str, content_desc: str, timeout_ms: int = TIMEOUT
+) -> bool:
+    """等待 rid + content_desc 元件消失，直到超時"""
+    resp = _broadcast(
+        adb,
+        cmd="wait_not_exists_rid_content_desc",
+        rid=rid,
+        desc=content_desc,
+        timeout_ms=timeout_ms,
+    )
+    return bool(resp.get("not_exists", False))
+
+
+def wait_not_exists_rid_text(
+    adb: Adb, rid: str, text: str, timeout_ms: int = TIMEOUT
+) -> bool:
+    """等待 rid + text 元件消失，直到超時"""
+    resp = _broadcast(
+        adb,
+        cmd="wait_not_exists_rid_text",
+        rid=rid,
+        text=text,
+        timeout_ms=timeout_ms,
+    )
+    return bool(resp.get("not_exists", False))
+
+
+def wait_not_exists_rid(adb: Adb, rid: str, timeout_ms: int = TIMEOUT) -> bool:
+    """等待 rid 元件消失，直到超時"""
+    resp = _broadcast(adb, cmd="wait_not_exists_rid", rid=rid, timeout_ms=timeout_ms)
+    return bool(resp.get("not_exists", False))
+
+
+def wait_not_exists_text(adb: Adb, text: str, timeout_ms: int = TIMEOUT) -> bool:
+    """等待 text 元件消失，直到超時"""
+    resp = _broadcast(adb, cmd="wait_not_exists_text", text=text, timeout_ms=timeout_ms)
+    return bool(resp.get("not_exists", False))
+
+
+# ------------------------------------------------------------
+# 中階 API（根據 ClickTarget 的欄位自動選擇適合的 handler）
+# ------------------------------------------------------------
+HANDLERS = {
+    "click": {
+        "rid_desc": click_rid_desc,
+        "rid_text": click_rid_text,
+        "rid": click_rid,
+        "text": click_text,
+    },
+    "exists": {
+        "rid_desc": exists_rid_desc,
+        "rid_text": exists_rid_text,
+        "rid": exists_rid,
+        "text": exists_text,
+    },
+    "wait": {
+        "rid_desc": wait_exists_rid_desc,
+        "rid_text": wait_exists_rid_text,
+        "rid": wait_exists_rid,
+        "text": wait_exists_text,
+    },
+    "wait_not_exists": {
+        "rid_desc": wait_not_exists_rid_desc,
+        "rid_text": wait_not_exists_rid_text,
+        "rid": wait_not_exists_rid,
+        "text": wait_not_exists_text,
+    },
+}
+
+
+def run_handler(adb: Adb, mode: str, target: ClickTarget, timeout_ms=None):
+    handlers = HANDLERS.get(mode)  # 根據 mode 決定執行的函數
+    if not handlers:
+        raise ValueError(f"Unknown mode: {mode}")
+
+    # 解析 target 的 selector，決定要呼叫哪個 handler 以及傳哪些參數
+    func, kwargs = resolve_selectors(target, handlers)
+
+    if not func:
+        raise ValueError("Invalid target: no selector matched")
+
+    if timeout_ms is not None:  # 有傳入 timeout_ms
+        kwargs["timeout_ms"] = timeout_ms  # 加入 timeout_ms 參數到 kwargs 中
+    return func(adb, **kwargs)  # **kwargs展開
+
+
+def resolve_selectors(target: ClickTarget, handlers: dict):
+    if target.rid and target.desc:
+        return handlers["rid_desc"], {
+            "rid": target.rid,
+            "content_desc": target.desc,
+        }
+    elif target.rid and target.text:
+        return handlers["rid_text"], {
+            "rid": target.rid,
+            "text": target.text,
+        }
+    elif target.rid:
+        return handlers["rid"], {
+            "rid": target.rid,
+        }
+    elif target.text:
+        return handlers["text"], {
+            "text": target.text,
+        }
+    raise ValueError("Invalid target: no selector matched")
+
+
+def click(adb: Adb, target: ClickTarget, raise_on_fail: bool = True) -> bool:
+    """觸發 target 所對應元件的點擊事件"""
+    result = False
+    result = run_handler(adb, "click", target)
+    if not result and raise_on_fail:
+        raise ClickFailedError(f"❌ 點擊失敗: {target.key_name}")
+    return result
+
+
+def exists(adb: Adb, target: ClickTarget) -> bool:
+    """查詢元件是否存在。"""
+    result = run_handler(adb, "exists", target)
+    return result
+
+
+def wait_exists(
+    adb: Adb,
+    target: ClickTarget,
+    timeout_ms: int = TIMEOUT,
+    raise_on_fail: bool = True,
+) -> bool:
+    """等待元件出現。"""
+    if run_handler(adb, "wait", target, timeout_ms=timeout_ms):
+        return True
+    if raise_on_fail:
+        raise WaitTargetNotFoundError(
+            f"❌ 目標未出現: {target.key_name}, timeout={timeout_ms}ms"
+        )
+    return False
+
+
+def wait_not_exists(
+    adb: Adb,
+    target: ClickTarget,
+    timeout_ms: int = TIMEOUT,
+    raise_on_fail: bool = True,
+) -> bool:
+    """等待元件消失。"""
+    if run_handler(adb, "wait_not_exists", target, timeout_ms=timeout_ms):
+        return True
+    if raise_on_fail:
+        raise WaitTargetNotFoundError(
+            f"❌ 目標未消失: {target.key_name}, timeout={timeout_ms}ms"
+        )
+    return False
+
+
+def wait_then_click(
+    adb: Adb,
+    click_target: ClickTarget,
+    timeout_ms: int = TIMEOUT,
+    raise_on_fail: bool = True,
+) -> bool:
+    """先等待元件出現，再執行點擊"""
+    w = wait_exists(
+        adb, click_target, timeout_ms=timeout_ms, raise_on_fail=raise_on_fail
+    )
+    c = click(adb, click_target, raise_on_fail=raise_on_fail)
+    return w and c
+
+
+def click_then_appear(
+    adb: Adb,
+    A: ClickTarget,
+    B: ClickTarget,
+    timeout_ms=TIMEOUT,
+) -> None:
+    try:
+        wait_exists(adb, A, timeout_ms=timeout_ms)
+        click(adb, A)
+        wait_exists(adb, B, timeout_ms=timeout_ms)
+    except Exception as e:
+        raise RuntimeError(f"{A.key_name} → {B.key_name} transition failed") from e
+
+
+def click_then_disappear(
+    adb: Adb,
+    A: ClickTarget,
+    B: ClickTarget,
+    timeout_ms=TIMEOUT,
+) -> None:
+    try:
+        wait_exists(adb, A, timeout_ms=timeout_ms)
+        click(adb, A)
+        wait_not_exists(adb, B, timeout_ms=timeout_ms)
+    except Exception as e:
+        raise RuntimeError(f"{A.key_name} → {B.key_name} transition failed") from e
+
+
+def click_child_rid(adb, rid, **kwargs):
+    ok = click_child_under_rid(adb, rid, **kwargs)
+    if not ok:
+        raise RuntimeError(f"click_child_under_rid failed: {rid}, {kwargs}")
 
 
 # ------------------------------------------------------------
@@ -131,93 +429,6 @@ def _broadcast(
 def ping(adb: Adb) -> dict:
     """發送 ping 命令以驗證 UiAgent 連線"""
     return _broadcast(adb, cmd="ping")
-
-
-def exists_rid(adb: Adb, rid: str) -> bool:
-    """查詢指定 rid 的元件是否存在"""
-    resp = _broadcast(adb, cmd="exists_rid", rid=rid)
-    return bool(resp.get("exists", False))
-
-
-def click_rid(adb: Adb, target: ClickTarget) -> bool:
-    """觸發 target 所對應元件的點擊事件"""
-    rid = target.resource_id
-    if not rid:
-        raise ValueError(f"ClickTarget {target.key_name!r} has no resource_id")
-
-    if target.text:
-        resp = _broadcast(adb, cmd="click_rid_text", rid=rid, text=target.text)
-    elif target.content_desc:
-        resp = _broadcast(
-            adb, cmd="click_rid_content_desc", rid=rid, desc=target.content_desc
-        )
-    else:
-        resp = _broadcast(adb, cmd="click_rid", rid=rid)
-    return bool(resp.get("clicked", False))
-
-
-def exists_text(adb: Adb, text: str) -> bool:
-    """查詢指定 text 的元件是否存在"""
-    resp = _broadcast(adb, cmd="exists_text", text=text)
-    return bool(resp.get("exists", False))
-
-
-def exists_rid_content_desc(adb: Adb, rid: str, content_desc: str) -> bool:
-    """查詢指定 rid + content_desc 的元件是否存在"""
-    resp = _broadcast(adb, cmd="exists_rid_content_desc", rid=rid, desc=content_desc)
-    return bool(resp.get("exists", False))
-
-
-def click_rid_content_desc(adb: Adb, rid: str, content_desc: str) -> bool:
-    """觸發 rid + content_desc 所對應元件的點擊事件"""
-    resp = _broadcast(adb, cmd="click_rid_content_desc", rid=rid, desc=content_desc)
-    return bool(resp.get("clicked", False))
-
-
-def wait_exists_rid_content_desc(
-    adb: Adb, rid: str, content_desc: str, timeout_ms: int = timeout_ms
-) -> bool:
-    """等待 rid + content_desc 元件出現，直到超時"""
-    resp = _broadcast(
-        adb,
-        cmd="wait_exists_rid_content_desc",
-        rid=rid,
-        desc=content_desc,
-        timeout_ms=timeout_ms,
-    )
-    return bool(resp.get("exists", False))
-
-
-def wait_exists_rid_text(
-    adb: Adb, rid: str, text: str, timeout_ms: int = timeout_ms
-) -> bool:
-    """等待 rid + text 元件出現，直到超時"""
-    resp = _broadcast(
-        adb,
-        cmd="wait_exists_rid_text",
-        rid=rid,
-        text=text,
-        timeout_ms=timeout_ms,
-    )
-    return bool(resp.get("exists", False))
-
-
-def click_text(adb: Adb, text: str) -> bool:
-    """觸發 text 所對應元件的點擊事件"""
-    resp = _broadcast(adb, cmd="click_text", text=text)
-    return bool(resp.get("clicked", False))
-
-
-def wait_exists_rid(adb: Adb, rid: str, timeout_ms: int = timeout_ms) -> bool:
-    """等待 rid 元件出現，直到超時"""
-    resp = _broadcast(adb, cmd="wait_exists_rid", rid=rid, timeout_ms=timeout_ms)
-    return bool(resp.get("exists", False))
-
-
-def wait_exists_text(adb: Adb, text: str, timeout_ms: int = timeout_ms) -> bool:
-    """等待 text 元件出現，直到超時"""
-    resp = _broadcast(adb, cmd="wait_exists_text", text=text, timeout_ms=timeout_ms)
-    return bool(resp.get("exists", False))
 
 
 def list_rids(adb: Adb, *, dedupe: bool = True) -> list[str]:
@@ -337,145 +548,72 @@ def swipe(adb: Adb, x1: int, y1: int, x2: int, y2: int, duration_ms: int = 300) 
 
 
 # ------------------------------------------------------------
-# ClickTarget 相容層（你目前的測試流程常用）
-# ------------------------------------------------------------
-def click(adb: Adb, target: ClickTarget, raise_on_fail: bool = True) -> bool:
-    """優先使用 resource_id + text，或 resource_id + content_desc，或單獨使用其中之一進行點擊。"""
-    result = False
-    if target.resource_id:
-        result = click_rid(adb, target)
-    elif target.text:
-        result = click_text(adb, target.text)
-
-    print(f"點擊 {target.key_name} 成功? {result}")
-    if not result and raise_on_fail:
-        raise ClickFailedError(f"❌ 點擊失敗: {target.key_name}")
-    return result
-
-
-def exists(adb: Adb, target: ClickTarget) -> bool:
-    """查詢元件是否存在。"""
-    if target.resource_id and target.content_desc:
-        return exists_rid_content_desc(adb, target.resource_id, target.content_desc)
-    if target.resource_id:
-        return exists_rid(adb, target.resource_id)
-    if target.text:
-        return exists_text(adb, target.text)
-    return False
-
-
-def wait_exists(
-    adb: Adb,
-    target: ClickTarget,
-    timeout_ms: int = timeout_ms,
-    raise_on_fail: bool = True,
-) -> bool:
-    """等待元件出現。"""
-    result = False
-    if target.resource_id and target.content_desc:
-        result = wait_exists_rid_content_desc(
-            adb, target.resource_id, target.content_desc, timeout_ms=timeout_ms
-        )
-    elif target.resource_id and target.text:
-        result = wait_exists_rid_text(
-            adb, target.resource_id, target.text, timeout_ms=timeout_ms
-        )
-
-    elif target.resource_id:
-        result = wait_exists_rid(adb, target.resource_id, timeout_ms=timeout_ms)
-
-    elif target.text:
-        result = wait_exists_text(adb, target.text, timeout_ms=timeout_ms)
-
-    print(f"等待 {target.key_name} 出現? {result}")
-    if not result and raise_on_fail:
-        raise WaitTargetNotFoundError(
-            f"❌ 目標未出現: {target.key_name}, timeout={timeout_ms}ms"
-        )
-    return result
-
-
-def wait_then_click(
-    adb: Adb,
-    wait_target: ClickTarget,
-    click_target: Optional[ClickTarget] = None,
-    timeout_ms: int = timeout_ms,
-    raise_on_fail: bool = True,
-) -> None:
-    """先等待 wait_target 出現，再點擊 click_target（任一步失敗直接拋例外）。"""
-
-    if click_target is None:
-        click_target = wait_target
-
-    wait_exists(adb, wait_target, timeout_ms=timeout_ms, raise_on_fail=raise_on_fail)
-    return click(adb, click_target, raise_on_fail=raise_on_fail)
-
-
-# ------------------------------------------------------------
 # 查詢畫面上的元件並返回 ClickTarget 陣列
 # ------------------------------------------------------------
 def query_elements(
     adb: Adb,
-    resource_id: Optional[str] = None,
+    rid: Optional[str] = None,
     *,
     text: Optional[str] = None,
-    content_desc: Optional[str] = None,
+    desc: Optional[str] = None,
     class_name: Optional[str] = None,
-) -> list[ClickTarget]:
+) -> ClickTarget:
     """查詢目前畫面上的元件，根據提供的欄位進行篩選，返回符合條件的 ClickTarget 陣列。
 
     Args:
-        resource_id: 要查詢的 Resource ID（支援模糊匹配）
+        rid: 要查詢的 Resource ID（支援模糊匹配）
         text: 要查詢的 Text（支援模糊匹配）
-        content_desc: 要查詢的 Content-Desc（支援模糊匹配）
+        desc: 要查詢的 Content-Desc（支援模糊匹配）
         class_name: 要查詢的 Class（支援模糊匹配）
 
     Returns:
-        符合條件的 ClickTarget 陣列（key_name 由 rid 或 text 或 content_desc 組成）
+        符合條件的 ClickTarget 陣列（key_name 由 rid 或 text 或 desc 組成）
     """
-    if not any([resource_id, text, content_desc, class_name]):
+    if not any([rid, text, desc, class_name]):
         raise ValueError(
-            "至少需要提供一個查詢欄位 (resource_id, text, content_desc, class_name)"
+            "至少需要提供一個查詢欄位 (resource_id, text, desc, class_name)"
         )
 
     elements = list_all_elements_with_class(adb)
     results: list[ClickTarget] = []
 
     for i, elem in enumerate(elements):
-        rid = elem.get("rid", "").strip()
-        txt = elem.get("text", "").strip()
-        cd = elem.get("content_desc", "").strip()
-        cls = elem.get("class", "").strip()
+        _rid = elem.get("rid", "").strip()
+        _text = elem.get("text", "").strip()
+        _desc = elem.get("desc", "").strip()
+        _cls = elem.get("class", "").strip()
 
         # 檢查是否符合查詢條件
         match = True
 
-        if resource_id is not None:
-            if resource_id not in rid:
+        if rid is not None:
+            if rid != _rid:
                 match = False
 
         if text is not None:
-            if text not in txt:
+            if text != _text:
                 match = False
 
-        if content_desc is not None:
-            if content_desc not in cd:
+        if desc is not None:
+            if desc != _desc:
                 match = False
 
         if class_name is not None:
-            if class_name not in cls:
+            if class_name != _cls:
                 match = False
 
-        if match:
-            # 使用 rid 或 text 或 content_desc 作為 key_name
-            key_name = rid or txt or cd or f"element_{i}"
-            results.append(
-                ClickTarget(
-                    key_name=key_name,
-                    resource_id=rid if rid else None,
-                    text=txt if txt else None,
-                    content_desc=cd if cd else None,
-                )
-            )
+        if not match:
+            continue
 
-    return results
+        results.append(
+            ClickTarget(
+                key_name="query",
+                rid=_rid if _rid else None,
+                text=_text if _text else None,
+                desc=_desc if _desc else None,
+            )
+        )
+    if results:
+        return results[0]
+    else:
+        raise RuntimeError(f"查詢目標不唯一: {results}")

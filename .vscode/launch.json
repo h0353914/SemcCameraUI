@@ -18,9 +18,9 @@
             "program": "test_camera/test_camera.py",
             "console": "integratedTerminal",
             "args": [
-                // "-m",
-                // "s",
-                "-f",
+                "-m",
+                // "v"
+                "s960",
                 // "--device",
                 // "QV700WMR11"
             ]

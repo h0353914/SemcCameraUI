@@ -18,11 +18,11 @@ class ClickTarget:
     - content-desc / bounds 一律忽略
     """
 
-    key_name: str
-    resource_id: Optional[str]
+    key_name: Optional[str] = None
+    rid: Optional[str] = None
     text: Optional[str] = None
-    content_desc: Optional[str] = None
-    
+    desc: Optional[str] = None
+
 
 def load_label_defs(path: Path) -> list[ClickTarget]:
     """
@@ -40,35 +40,33 @@ def load_label_defs(path: Path) -> list[ClickTarget]:
         raise ValueError("label json must be an object")
 
     for key_name, val in data.items():
-        key_name = str(key_name or "")
-        
+        if not key_name:
+            print(f"跳過無效的 key_name: {key_name!r}", file=sys.stderr)
+            continue
+
         rid = None
         text = None
-        cd = None
+        desc = None
 
-        if isinstance(val, str):
-            rid = val.strip() or None
-        elif isinstance(val, dict):
-            rid = val.get("resource_id")
+        if isinstance(val, dict):
+            rid = val.get("rid")
             text = val.get("text")
-            cd = val.get("content_desc")
-        
+            desc = val.get("desc")
+
         # 如果完全沒有識別資訊就跳過
-        if not any([rid, text, cd]):
+        if not any([rid, text, desc]):
             continue
 
         defs.append(
             ClickTarget(
                 key_name=key_name,
-                resource_id=rid,
+                rid=rid,
                 text=text,
-                content_desc=cd,
+                desc=desc,
             )
         )
 
     return defs
-
-
 
 
 def find_click_target(key_name: str, targets: Iterable[ClickTarget]) -> ClickTarget:

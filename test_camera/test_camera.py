@@ -14,12 +14,17 @@ sys.path.insert(0, str(TEST_CAMERA_DIR))
 import uiagent_client as uiagent_client  # noqa: E402
 import uiagent_instrumentation_client as uiagent_instrumentation_client  # noqa: E402
 from key import (  # noqa: E402
+    ClickTarget,
     load_click_targets,
 )
 from uiagent_client import (  # noqa: E402
     ClickFailedError,
     WaitTargetNotFoundError,
+    click_child_rid,
     click_child_under_rid,
+    click_then_appear,
+    click_then_disappear,
+    exists,
     query_elements,
     wait_exists,
     wait_then_click,
@@ -29,38 +34,381 @@ from uiagent_instrumentation_client import (  # noqa: E402
 )
 from tools_Common.adb import Adb  # noqa: E402
 
-
+TIMEOUT = 5000
+S_TIMEOUT = 500
+L_TIMEOUT = 7000
 CAMERA_PACKAGE_NAME = "com.sonyericsson.android.camera"
 
 
-def ensure_uiagent_ready(adb: Adb) -> None:
+# ------------------------------------------------------------
+# 失敗後的檢查函式
+# ------------------------------------------------------------
+def check_error_ui(adb: Adb, click_map, *, timeout_ms=TIMEOUT) -> str | None:
+    """
+    檢查是否有錯誤對話框
+    回傳錯誤訊息（有的話），否則回傳 None
+    """
+    if wait_exists(adb, click_map["錯誤"], timeout_ms=timeout_ms, raise_on_fail=False):
+        results = query_elements(adb, click_map["錯誤"].resource_id)
+        text = (results.text if results else "") or ""
+        return text
+    return None
 
-    component = "com.example.uiagent/com.example.uiagent.UiAgentAccessibilityService"
 
-    enabled_flag = adb.get_setting_secure("accessibility_enabled")
-    services = adb.get_setting_secure("enabled_accessibility_services")
+def check_camera_ui(adb: Adb, click_map, *, timeout_ms=TIMEOUT) -> bool:
+    return wait_exists(
+        adb, click_map["模式"], timeout_ms=timeout_ms, raise_on_fail=False
+    )
 
-    is_enabled = enabled_flag == "1"
-    in_services = services and component in services.split(":")
 
-    if is_enabled and in_services:
+def check_camera_running(adb: Adb) -> bool:
+    result = adb.shell(f"pidof {CAMERA_PACKAGE_NAME}", check=False)
+    return bool(result.stdout and result.stdout.strip())
+
+
+def check_all(adb, click_map, *, timeout_ms=TIMEOUT, interval_ms=200):
+    deadline = time.monotonic() + timeout_ms / 1000
+
+    running = False
+    ui_ok = False
+    err_msg = None
+
+    while time.monotonic() < deadline:
+        if not running:
+            running = check_camera_running(adb)
+
+        if not ui_ok:
+            ui_ok = check_camera_ui(adb, click_map)
+
+        if err_msg is None:
+            err_msg = check_error_ui(adb, click_map)
+
+        # 一旦有錯誤就立刻結束
+        if err_msg:
+            break
+
+        # 全部都 OK 提早結束
+        if running and ui_ok:
+            break
+
+        time.sleep(interval_ms / 1000)
+
+    return {
+        "running": running,
+        "ui_ok": ui_ok,
+        "error": err_msg,
+    }
+
+
+# ------------------------------------------------------------
+# 測試流程函式
+# ------------------------------------------------------------
+def test_photo(adb: Adb, click_map) -> None:
+    """拍照測試流程"""
+    print("測試拍照模式...")
+
+    click_camera_mode(adb, click_map, mode="main", param="photo")  # 切到拍照模式
+
+    print("拍照中...")
+    click_then_disappear(adb, click_map["B_拍照鍵"], click_map["B_模式通用"])
+    wait_exists(adb, click_map["B_模式通用"])
+
+
+def test_video(adb: Adb, click_map) -> None:
+    """錄影測試流程"""
+    print("測試錄影模式...")
+
+    click_camera_mode(adb, click_map, mode="main", param="video")  # 切到錄影模式
+
+    print("開始錄影...")
+    click_then_appear(adb, click_map["B_錄影鍵"], click_map["B_停止錄影"])
+
+    wait_record_time(adb, click_map, target_sec=4)  # 等待錄影至少 4 秒
+
+    print("停止錄影...")
+    click_then_appear(
+        adb, click_map["B_停止錄影"], click_map["B_錄影鍵"], timeout_ms=8000
+    )
+
+
+def test_photo_settings(adb: Adb, click_map) -> bool:
+    """測試拍照設定是否存在"""
+    print("測試拍照設定...")
+    click_camera_mode(adb, click_map, mode="main", param="photo")  # 切到拍照模式
+
+    click_then_appear(adb, click_map["B_設定"], click_map["ANCHOR_設定選單"])
+
+    # 所有設定選項清單
+    settings_check = [
+        ("靜態影像尺寸", click_map["S_靜態影像尺寸"]),
+        ("預拍功能", click_map["S_預拍功能"]),
+        ("物件追蹤", click_map["S_物件追蹤"]),
+        ("自動拍攝", click_map["S_自動拍攝"]),
+        ("失真校正", click_map["S_失真校正"]),
+    ]
+    result = True
+    for name, target in settings_check:
+        exists_result = exists(adb, target)
+        print(f"  {name}\t: {'✓ 存在' if exists_result else '✗ 不存在'}")
+        if exists_result and result:
+            result = True
+        else:
+            result = False
+
+    click_then_disappear(adb, click_map["B_設定"], click_map["ANCHOR_設定選單"])
+    if not result:
+        raise RuntimeError("部分拍照設定選項不存在")
+    return result
+
+
+def test_slow_base(adb: Adb, click_map, param) -> bool:
+    """慢動作測試流程"""
+    print(f"切到慢動作({param})...")
+    click_camera_mode(adb, click_map, mode="slow", param=param)
+
+
+def test_slow_single(adb: Adb, click_map) -> bool:
+    """慢動作測試流程"""
+    test_slow_base(adb, click_map, param="single")
+
+    click_then_disappear(adb, click_map["B_快門通用"], click_map["B_模式通用"])
+    wait_exists(adb, click_map["B_模式通用"])
+
+
+def test_slow_960(adb: Adb, click_map) -> bool:
+    """慢動作測試流程"""
+    test_slow_base(adb, click_map, param="960")
+
+    print("開始錄影...")
+    click_then_appear(adb, click_map["B_快門通用"], click_map["B_960停止錄影"])
+
+    wait_record_time(adb, click_map, target_sec=2)  # 等待錄影至少 2 秒
+
+    print("慢動作拍照...")
+    click_then_disappear(adb, click_map["B_快門通用"], click_map["STATE_錄影計時"])
+
+    wait_record_time(adb, click_map, target_sec=6)  # 等待錄影至少 6 秒
+
+    print("停止錄影...")
+    click_then_appear(
+        adb, click_map["B_960停止錄影"], click_map["B_快門通用"], timeout_ms=8000
+    )
+
+
+def test_slow_120(adb: Adb, click_map) -> bool:
+    """慢動作測試流程"""
+    test_slow_base(adb, click_map, param="120")
+
+    print("開始錄影...")
+    click_then_appear(adb, click_map["B_快門通用"], click_map["B_停止錄影"])
+
+    wait_record_time(adb, click_map, target_sec=4)  # 等待錄影至少 4 秒
+    print("停止錄影...")
+    click_then_appear(
+        adb, click_map["B_停止錄影"], click_map["B_快門通用"], timeout_ms=8000
+    )
+
+
+# ------------------------------------------------------------
+# 共用函式
+# ------------------------------------------------------------
+
+
+def wait_record_time(adb, click_map, target_sec=4, timeout_sec=10):
+    wait_exists(adb, click_map["STATE_錄影計時"])  # 等待錄影計時出現，確認開始錄影
+
+    start = time.time()
+    while True:
+        # ⏱ 超時檢查
+        if time.time() - start > timeout_sec:
+            raise TimeoutError(f"錄影超時 {timeout_sec} 秒")
+
+        text = get_text(adb, click_map["STATE_錄影計時"])
+        print(f"錄影計時: {text} ", end="\r")
+
+        if time_to_sec(text) >= target_sec:
+            print()  # 換行
+            break
+
+
+def time_to_sec(t: str) -> int:
+    m, s = map(int, t.split(":"))
+    return m * 60 + s
+
+
+def to_slow(adb, click_map):
+    click_then_appear(adb, click_map["B_模式選單"], click_map["O_模式_慢動作"])
+    click_then_appear(adb, click_map["O_模式_慢動作"], click_map["B_返回拍照"])
+
+
+def to_main(adb, click_map):
+    click_then_appear(adb, click_map["B_返回拍照"], click_map["B_模式選單"])
+
+
+def main_switch(adb, click_map, video_mode):
+    cfg = VIDEO_MODES.get(video_mode)
+    if not cfg:
+        raise ValueError(f"未知 video mode: {video_mode}")
+    pick = cfg.get("button")
+    click_child_rid(adb, click_map["UI_模式切換滑塊"].rid, pick=pick)
+
+
+def slow_switch(adb, click_map, slow_mode):
+    click_then_appear(adb, click_map["B_設定"], click_map["ANCHOR_設定選單"])
+    click_then_appear(adb, click_map["S_慢動作"], click_map["S_慢動作"])
+    cfg = SLOW_MODES.get(slow_mode)
+    if not cfg:
+        raise ValueError(f"未知 slow mode: {slow_mode}")
+    click_then_disappear(
+        adb,
+        ClickTarget(
+            rid=click_map["S_慢動作"].rid,
+            text=cfg.get("button"),
+        ),
+        click_map["ANCHOR_設定選單"],
+    )
+
+
+TRANSITIONS = {
+    # --- 跨 mode ---
+    ("main", "slow"): to_slow,
+    ("slow", "main"): to_main,
+    # --- main 內 ---
+    ("main", "video"): main_switch,
+    ("main", "photo"): main_switch,
+    # --- slow 內 ---
+    ("slow", "960"): slow_switch,
+    ("slow", "120"): slow_switch,
+    ("slow", "single"): slow_switch,
+}
+
+
+def get_transition(current_mode, target):
+    action = TRANSITIONS.get((current_mode, target))
+    if not action:
+        raise ValueError(f"Unknown transition: ({current_mode}, {target})")
+    return action
+
+
+def dispatch(adb, click_map, current_mode, target_mode, target_param):
+
+    if current_mode != target_mode:
+        action = get_transition(current_mode, target_mode)
+        action(adb, click_map)
         return
 
-    print("⚠️ UiAgent 無障礙服務尚未安裝或是啟用，請安裝或是啟用。")
-    # 直接中止，避免後面 exists/click 沒作用讓你誤判
-    raise SystemExit("")
+    action = get_transition(current_mode, target_param)
+    action(adb, click_map, target_param)
 
 
-def launch_camera(adb: Adb) -> None:
-    """Launch the stock Sony camera app so we can interact with its UI."""
-    print("啟動相機應用程式...\n")
-    adb.shell(
-        "am start -a android.media.action.STILL_IMAGE_CAMERA -p com.sonyericsson.android.camera",
-        check=True,
-    )
-    time.sleep(0.5)
+def click_camera_mode(adb: Adb, click_map, *, mode: str, param: str) -> None:
+    wait_exists(adb, click_map["B_模式通用"], timeout_ms=TIMEOUT)  # 確認模式按鈕存在
+    for _ in range(10):  # 最多嘗試 10 次確認模式
+        current_mode, current_param = get_camera_mode(adb, click_map)
+        if current_mode == mode and current_param == param:
+            return
+
+        dispatch(adb, click_map, current_mode, mode, param)
+
+    raise RuntimeError(f"切換模式失敗，未成功切到 {mode}/{param}")
 
 
+VIDEO_MODES = {
+    "video": {
+        "state": "錄製",
+        "button": "right",
+    },
+    "photo": {
+        "state": "相機鍵",
+        "button": "left",
+    },
+}
+
+
+SLOW_MODES = {
+    "960": {
+        "state": "超級慢動作",
+        "button": "超級慢動作",
+    },
+    "120": {
+        "state": "慢動作",
+        "button": "慢動作",
+    },
+    "single": {
+        "state": "超級慢動作(單拍)",  # 狀態名稱
+        "button": "超級慢(僅限一次)",  # 按鈕名稱
+    },
+}
+VIDEO_MODES_TO_KEY = {v["state"]: k for k, v in VIDEO_MODES.items()}
+SLOW_STATE_TO_KEY = {v["state"]: k for k, v in SLOW_MODES.items()}
+
+
+def get_camera_mode(adb, click_map):
+    mode = None
+    param = None
+    if exists(adb, click_map["STATE_慢動作模式"]):  # 如果在慢動作模式
+        mode = "slow"
+        current_text = get_text(adb, click_map["STATE_慢動作模式"])  # 取得慢動作模式
+        param = SLOW_STATE_TO_KEY.get(current_text)
+    else:  # 如果在一般模式
+        mode = "main"
+        current_text = get_desc(adb, click_map["B_快門通用"])  # 取得快門模式
+        param = VIDEO_MODES_TO_KEY.get(current_text)
+
+    if not param:
+        raise RuntimeError(f"無法識別的模式參數，mode: {mode}, text: {current_text}")
+    return mode, param
+
+
+def get_text(adb, target) -> str:
+    """用rid取得指定文字"""
+    if not exists(adb, target):
+        raise WaitTargetNotFoundError(f"找不到目標: {target.key_name}")
+    results = query_elements(adb, target.rid)
+    text = (getattr(results, "text", "") or "").strip()
+    return text
+
+
+def get_desc(adb, target) -> str:
+    """用rid取得指定描述"""
+    if not exists(adb, target):
+        raise WaitTargetNotFoundError(f"找不到目標: {target.key_name}")
+    results = query_elements(adb, target.rid)
+    desc = (getattr(results, "desc", "") or "").strip()
+    return desc
+
+
+def stop_camera(adb: Adb, force_stop=False) -> None:
+    print("停止相機應用程式...")
+    if force_stop:
+        clear_all_task_stacks(adb)
+    else:
+        adb.shell(f"am force-stop {CAMERA_PACKAGE_NAME}", check=False)
+
+
+def has_saved(adb: Adb, timeout_ms: int = 8000) -> bool:
+    """檢查 DCIM 是否新增檔案，每次掃描都印出數量，找到新檔案就 True"""
+    global file_count
+    print(f"當前 DCIM 檔案數量: {file_count}")
+    deadline = time.monotonic() + timeout_ms / 1000
+    result = False
+
+    while time.monotonic() < deadline:
+        new_count = get_dcim_file_count(adb)
+
+        if new_count > file_count:
+            file_count = new_count
+            result = True
+            print(f"當前 DCIM 檔案數量: {new_count}")
+            break
+        time.sleep(0.1)
+
+    return result
+
+
+# ------------------------------------------------------------
+# 參數解析
+# ------------------------------------------------------------
 def parse_args(tests) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Automate taking a photo with the stock camera app."
@@ -145,6 +493,150 @@ def parse_args(tests) -> argparse.Namespace:
     return parser.parse_args()
 
 
+# ------------------------------------------------------------
+# 測試流程函式(待修改)
+# ------------------------------------------------------------
+
+
+def 切換慢動作模式(adb: Adb, click_map, 慢動作模式, timeout_ms=TIMEOUT) -> None:
+    """切換慢動作模式"""
+
+    def _取得目前慢動作模式() -> str:
+        """取得目前慢動作模式"""
+        wait_exists(adb, click_map["慢動作模式"], timeout_ms=0, raise_on_fail=False)
+        results = query_elements(adb, click_map["慢動作模式"].resource_id)
+        mode = (getattr(results, "text", "") or "").strip()
+        return mode
+
+    def _等待切換完成() -> bool:
+
+        deadline = time.monotonic() + timeout_ms / 1000
+
+        while time.monotonic() < deadline:
+            mode = _取得目前慢動作模式()
+
+            if mode == 慢動作模式:
+                return True
+            time.sleep(0.1)
+        return False
+
+    print(f"開始切到慢動作({慢動作模式})...")
+
+    mode = _取得目前慢動作模式()
+    if mode == 慢動作模式:
+        print("已經在目標模式，略過切換")
+        return
+
+    # open_settings(adb, click_map)
+    wait_then_click(adb, click_map["慢動作模式選單"], timeout_ms=timeout_ms)
+    wait_then_click(adb, click_map[慢動作模式], timeout_ms=timeout_ms)
+
+    if _等待切換完成():
+        print("成功切換慢動作模式")
+        return
+    raise RuntimeError(f"切換慢動作模式失敗，未在 {timeout_ms}ms 內切到 {慢動作模式}")
+
+
+def test_slow_motion_base1(adb: Adb, click_map, 慢動作模式="慢動作僅一次") -> bool:
+    """慢動作測試流程"""
+    print(f"切到慢動作({慢動作模式})...")
+
+    wait_then_click(adb, click_map["模式"])
+    wait_then_click(adb, click_map["慢動作"])
+    # 手動啟動相機會出現 "教學" 腳本啟動相機方式不會出現才正常。
+    wait_exists(adb, click_map["慢動作模式"])  # 確認已切到慢動作模式
+    results = query_elements(adb, click_map["慢動作模式"].resource_id)  # 取得慢動作模式
+    mode = results.text if results else ""
+    if mode != "慢動作模式":  # 確認慢動作模式
+        raise RuntimeError(f"未切到預期的慢動作模式，當前模式: {mode}")
+
+    # open_settings(adb, click_map)
+    try:
+        wait_then_click(adb, click_map["慢動作模式選單"])
+    except WaitTargetNotFoundError as e:
+        print(f"{e} 慢動作模式不存在")
+        return
+
+    wait_then_click(adb, click_map[慢動作模式])
+
+    print("第一次慢動作拍攝中...")
+    wait_then_click(adb, click_map["B_拍照鍵"])
+
+
+def test_super_960_once(adb: Adb, click_map) -> bool:
+    """慢動作測試流程"""
+
+    test_slow_single(adb, click_map, 慢動作模式="慢動作僅一次")
+
+
+def test_slow_motion(adb: Adb, click_map) -> bool:
+    """慢動作測試流程"""
+    # results = query_elements(click_map["慢動作"].resource_id)#慢動作模式判斷
+    # Text = (results[0].text if results else "") or ""
+
+    print("切到慢動作模式...")
+    wait_then_click(adb, click_map["模式"])
+    wait_then_click(adb, click_map["慢動作"])
+    time.sleep(0.5)
+
+    # open_settings(adb, click_map)
+    try:
+        wait_then_click(adb, click_map["慢動作模式選單"])
+    except WaitTargetNotFoundError as e:
+        print(f"{e} 慢動作模式不存在")
+        return
+
+    wait_then_click(adb, click_map["慢動作僅一次"])
+
+    print("第一次慢動作拍攝中...")
+    wait_then_click(adb, click_map["B_拍照鍵"])
+
+
+# def test_t(click_map) -> bool:
+#     """色彩與亮度滑動測試"""
+#     wait_then_click(click_map["色彩和亮度"])
+
+#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
+#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
+
+#     wait_then_click(click_map["關閉色彩和亮度調整"])
+
+#     wait_then_click(click_map["色彩和亮度"])
+
+#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
+#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
+
+#     return True
+# ------------------------------------------------------------
+
+
+def ensure_uiagent_ready(adb: Adb) -> None:
+
+    component = "com.example.uiagent/com.example.uiagent.UiAgentAccessibilityService"
+
+    enabled_flag = adb.get_setting_secure("accessibility_enabled")
+    services = adb.get_setting_secure("enabled_accessibility_services")
+
+    is_enabled = enabled_flag == "1"
+    in_services = services and component in services.split(":")
+
+    if is_enabled and in_services:
+        return
+
+    print("⚠️ UiAgent 無障礙服務尚未安裝或是啟用，請安裝或是啟用。")
+    # 直接中止，避免後面 exists/click 沒作用讓你誤判
+    raise SystemExit("")
+
+
+def launch_camera(adb: Adb, app="com.sonyericsson.android.camera") -> None:
+    """Launch the stock Sony camera app so we can interact with its UI."""
+    print("啟動相機應用程式...\n")
+    adb.shell(
+        f"am start -a android.media.action.STILL_IMAGE_CAMERA -p {app}",
+        check=True,
+    )
+
+
 def prepare_device(adb: Adb) -> None:
     adb.shell("input keyevent KEYCODE_WAKEUP", check=True)  # 喚醒裝置
     adb.shell("wm dismiss-keyguard", check=True)  # 解鎖裝置
@@ -166,23 +658,12 @@ def handle_permission_dialog(adb: Adb, click_map) -> None:
         if not client.wait_then_click(click_map["使用期間允許"], raise_on_fail=False):
             return
         client.wait_then_click(click_map["使用期間允許"])
-        if not client.wait_then_click(
-            click_map["允許檔案存取"], timeout_ms=1000, raise_on_fail=False
-        ):
+        if not client.wait_then_click(click_map["允許檔案存取"], raise_on_fail=False):
             client.wait_then_click(click_map["全部允許"], raise_on_fail=False)
     finally:
         threading.Thread(
             target=client.stop_instrumentation_service, daemon=True
         ).start()
-
-
-def stop_camera(adb: Adb, force_stop=False) -> None:
-    print("停止相機應用程式...")
-    if force_stop:
-        clear_all_task_stacks(adb)
-    else:
-        adb.shell(f"am force-stop {CAMERA_PACKAGE_NAME}", check=False)
-    time.sleep(0.5)  # 等待 CacaoService 清理 client session
 
 
 def clear_all_task_stacks(adb: Adb) -> None:
@@ -217,256 +698,6 @@ def get_dcim_file_count(adb: Adb) -> int:
         return 0
 
 
-def has_saved(adb: Adb, timeout_ms: int = 5000, interval_ms: int = 200) -> bool:
-    """檢查 DCIM 是否新增檔案，每次掃描都印出數量，找到新檔案就 True"""
-    global file_count
-    print(f"當前 DCIM 檔案數量: {file_count}")
-    deadline = time.monotonic() + timeout_ms / 1000
-    success = False
-
-    while time.monotonic() < deadline:
-        new_count = get_dcim_file_count(adb)
-
-        if new_count > file_count:
-            file_count = new_count
-            success = True
-            print(f"當前 DCIM 檔案數量: {new_count}")
-            break
-        time.sleep(interval_ms / 1000)
-
-    return success
-
-
-def ensure_camera_mode_ui(adb: Adb, click_map):
-    # 嘗試切換回照相錄影模式，因為慢動作模式下沒有拍照錄影滑塊
-    if wait_then_click(
-        adb, click_map["關閉色彩和亮度調整"], timeout_ms=0, raise_on_fail=False
-    ):
-        return
-
-    open_settings(adb, click_map)
-
-    if wait_exists(adb, click_map["慢動作模式"], timeout_ms=1000, raise_on_fail=False):
-        wait_then_click(adb, click_map["模式"], timeout_ms=2000)
-
-
-def click_camera_mode(adb: Adb, click_map, *, mod: str) -> bool:
-    pick = {"p": "left", "v": "right"}.get(mod.lower(), mod)
-    滑塊 = click_map["錄影拍照滑塊"]
-
-    if not wait_exists(
-        adb, 滑塊, timeout_ms=2000, raise_on_fail=False
-    ):  # 如果滑塊不存在
-        ensure_camera_mode_ui(adb, click_map)  # 嘗試切換回照相錄影模式
-
-    time.sleep(0.1)
-    return click_child_under_rid(adb, 滑塊.resource_id, pick=pick, index=0)
-
-
-def open_settings(adb: Adb, click_map, timeout_ms=3000) -> None:
-    print("點擊設定...")
-
-    start_time = time.time()
-    timeout_s = timeout_ms / 1000
-    last_error = None
-    while time.time() - start_time < timeout_s:
-        try:
-            wait_then_click(adb, click_map["設定"], timeout_ms=0)
-            wait_exists(adb, click_map["一般設定"], timeout_ms=0)
-            return
-        except WaitTargetNotFoundError as e:
-            print("無法偵測到設定，重試...")
-            last_error = e
-        except ClickFailedError as e:
-            print("點擊設定失敗，重試...")
-            last_error = e
-        time.sleep(0.1)
-
-    if last_error:
-        raise last_error
-    raise RuntimeError(f"開啟設定失敗（無明確例外），timeout={timeout_ms}ms")
-
-
-def test_photo(adb: Adb, click_map) -> bool:
-    """拍照測試流程"""
-    print("切到拍照模式...")
-    click_camera_mode(adb, click_map, mod="p")  # 切到拍照模式
-
-    print("拍照中...")
-    wait_then_click(adb, click_map["拍照鍵"], timeout_ms=5000)
-
-
-def test_video(adb: Adb, click_map) -> bool:
-    """錄影測試流程"""
-    print("切到錄影模式...")
-    click_camera_mode(adb, click_map, mod="v")  # 切到錄影模式
-
-    time.sleep(1)
-    print("開始錄影...")
-    wait_then_click(adb, click_map["拍照鍵"], timeout_ms=5000)
-
-    time.sleep(7)
-    print("停止錄影...")
-    wait_then_click(adb, click_map["拍照鍵"], timeout_ms=5000)
-
-
-def dismiss_tutorial(adb: Adb, click_map) -> None:
-    """嘗試關閉教學頁面（跳過教學或知道了）"""
-    if wait_exists(adb, click_map["跳過教學"], timeout_ms=2000, raise_on_fail=False):
-        print("跳過教學...")
-        wait_then_click(adb, click_map["跳過教學"], timeout_ms=1000)
-        time.sleep(0.3)
-    elif wait_exists(adb, click_map["知道了"], timeout_ms=500, raise_on_fail=False):
-        print("點擊知道了...")
-        wait_then_click(adb, click_map["知道了"], timeout_ms=1000)
-        time.sleep(0.3)
-
-
-def test_slow_motion(adb: Adb, click_map) -> bool:
-    """慢動作測試流程"""
-    # results = query_elements(click_map["慢動作"].resource_id)#慢動作模式判斷
-    # Text = (results[0].text if results else "") or ""
-
-    print("切到慢動作模式...")
-    wait_then_click(adb, click_map["模式"], timeout_ms=3000)
-    wait_then_click(adb, click_map["慢動作"], timeout_ms=5000)
-    time.sleep(0.5)
-
-    dismiss_tutorial(adb, click_map)
-
-    open_settings(adb, click_map)
-    try:
-        wait_then_click(adb, click_map["慢動作模式"], timeout_ms=3000)
-    except WaitTargetNotFoundError as e:
-        print(f"{e} 慢動作模式不存在")
-        return
-
-    wait_then_click(adb, click_map["慢動作僅一次"], timeout_ms=3000)
-
-    dismiss_tutorial(adb, click_map)
-
-    print("第一次慢動作拍攝中...")
-    wait_then_click(adb, click_map["拍照鍵"], timeout_ms=5000)
-
-
-# def test_t(click_map) -> bool:
-#     """色彩與亮度滑動測試"""
-#     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
-
-#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-#     wait_then_click(click_map["關閉色彩和亮度調整"], timeout_ms=2000)
-
-#     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
-
-#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-#     return True
-
-
-# def test_t(click_map) -> bool:
-#     """色彩與亮度滑動測試"""
-#     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
-
-#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-#     wait_then_click(click_map["關閉色彩和亮度調整"], timeout_ms=2000)
-
-#     wait_then_click(click_map["色彩和亮度"], timeout_ms=2000)
-
-#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-#     return True
-
-
-def test_photo_settings(adb: Adb, click_map) -> bool:
-    """測試拍照設定是否存在"""
-    click_camera_mode(adb, click_map, mod="p")  # 切到拍照模式
-
-    open_settings(adb, click_map)  # 點擊設定按鈕
-
-    # 所有設定選項清單
-    settings_check = [
-        ("靜態影像尺寸", click_map["靜態影像尺寸"]),
-        ("預拍功能", click_map["預拍功能"]),
-        ("物件追蹤", click_map["物件追蹤"]),
-        ("自動拍攝", click_map["自動拍攝"]),
-        ("失真校正", click_map["失真校正"]),
-    ]
-
-    result = True
-    for name, target in settings_check:
-        exists = wait_exists(adb, target, timeout_ms=1500)
-
-        if name == "靜態影像尺寸" and not exists:
-            print("再次嘗試點擊設定...")
-            open_settings(adb, click_map)
-            exists = wait_exists(adb, target, timeout_ms=1500)
-
-        print(f"  {name}\t: {'✓ 存在' if exists else '✗ 不存在'}")
-
-        if not exists:
-            result = False
-
-    open_settings(adb, click_map)  # 關閉設定
-
-    return result
-
-
-def check_camera_running(adb: Adb) -> None:
-    """
-    檢查相機是否正在運行。
-    若未運行則直接退出程式。
-    """
-    result = adb.shell(f"pidof {CAMERA_PACKAGE_NAME}", check=False)
-    if not bool(result.stdout and result.stdout.strip()):
-        raise RuntimeError("無法檢測到相機app正在運行 ❌")
-
-
-def check_camera_ui(adb: Adb, click_map, *, timeout_ms=6000) -> None:
-    """
-    同時非阻塞等待錯誤對話框與模式按鈕。
-    發現錯誤先記錄，最後統一處理。
-    """
-    errors = []
-    start_time = time.time()
-    timeout_s = timeout_ms / 1000.0
-
-    found_error = False
-    found_mode = False
-
-    while time.time() - start_time < timeout_s:
-        # 檢查錯誤對話框
-        if not found_error and wait_exists(
-            adb, click_map["錯誤"], timeout_ms=0, raise_on_fail=False
-        ):
-            errors.append("發現錯誤對話框")
-            results = query_elements(adb, click_map["錯誤"].resource_id)
-            Text = (results[0].text if results else "") or ""
-            errors.append(f"錯誤訊息: {Text}")
-            found_error = True
-
-        # 檢查模式按鈕
-        if not found_mode and wait_exists(
-            adb, click_map["模式"], timeout_ms=0, raise_on_fail=False
-        ):
-            found_mode = True
-
-        # 如果兩個都檢查完，就提前結束迴圈
-        if found_error and found_mode:
-            break
-
-    # 超時後仍未找到模式按鈕
-    if not found_mode:
-        errors.append("模式按鈕未出現，UI 可能未回覆或初始化異常，程式終止 ❌")
-    if errors:
-        raise RuntimeError(f"\n\n{'\n'.join(errors)}\n")
-
-
 def get_click_map():
     key_path = Path(__file__).parent / "key.json"  # load keys
     click_targets = load_click_targets(key_path)  # load click targets
@@ -490,9 +721,6 @@ def run_camera_test_flow(adb: Adb, args, tests, click_map):
     if args.clear_data:
         handle_permission_dialog(adb, click_map)  # 處理權限彈窗
 
-    # 手動啟動相機會出現 "儲存地點否" 腳本啟動相機不會出現。
-    wait_then_click(adb, click_map["儲存地點否"], timeout_ms=1000, raise_on_fail=False)
-
     for mode in args.mode:
         result = True
         cfg = tests[mode]
@@ -513,10 +741,16 @@ def run_camera_test_flow(adb: Adb, args, tests, click_map):
             else:
                 raise RuntimeError(f"{label}結果: ❌")
         except (RuntimeError, WaitTargetNotFoundError, ClickFailedError) as e:
-            print(f"模式 {mode} {e}")
             result = False
-            check_camera_running(adb)
-            check_camera_ui(adb, click_map)
+            print(f"模式 {mode} {e}")
+            diag = check_all(adb, click_map)
+            print("----- 診斷結果 -----")
+            print(f"{'Camera running':<18}    : {'✅' if diag['running'] else '❌'}")
+            print(f"{'UI 正常':<18}  : {'✅' if diag['ui_ok'] else '❌'}")
+            print(f"{'錯誤訊息':<18}: {diag['error'] or '無'}")
+        except Exception as e:
+            result = False
+            print(f"模式 {mode} 發生未預期錯誤: {e}")
         finally:
             print(f"========== 結束 {cfg['name']} 測試 ==========")
             if not result:
@@ -534,24 +768,36 @@ def main() -> None:
             "check_saved": True,
             "alias": "p",
         },
-        "video": {
-            "func": test_video,
-            "name": "錄影",
-            "check_saved": True,
-            "alias": "v",
-        },
         "photo_settings": {
             "func": test_photo_settings,
             "name": "拍照設定選項",
             "check_saved": False,
             "alias": "st",
         },
-        "slow_motion": {
-            "func": test_slow_motion,
+        "video": {
+            "func": test_video,
+            "name": "錄影",
+            "check_saved": True,
+            "alias": "v",
+        },
+        "slow_single": {
+            "func": test_slow_single,
             "name": "超級慢動作(單拍)",
             "check_saved": True,
-            "alias": "sm",
+            "alias": "so",
         },
+        "slow_960": {
+            "func": test_slow_960,
+            "name": "超級慢動作",
+            "check_saved": True,
+            "alias": "s960",
+        },
+        # "slow_120": {
+        #     "func": test_slow_120,
+        #     "name": "慢動作",
+        #     "check_saved": True,
+        #     "alias": "s120",
+        # },
     }
 
     args = parse_args(tests)
