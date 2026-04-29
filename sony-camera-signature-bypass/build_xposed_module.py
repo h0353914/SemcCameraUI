@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """構建 Sony Camera Signature Bypass Xposed 模組"""
 
-import argparse
 import subprocess
+import argparse
 import sys
 from pathlib import Path
 
@@ -10,38 +10,28 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 from tools_Common.adb import Adb  # noqa: E402
+from tools_Common.build_java_common import build_java_app  # noqa: E402
+from tools_Common.push_common import install_apk  # noqa: E402
 
-# App_xposed/build_xposed_module.py
 MODULE_DIR = Path(__file__).resolve().parent
 APK_OUTPUT = MODULE_DIR / "app/build/outputs/apk/release/app-release.apk"
 PACKAGE = "com.sony.camera.signaturebypass"
 
 
-def _gradle_cmd() -> str:
-    gradlew = MODULE_DIR / "gradlew"
-    if gradlew.exists():
-        return str(gradlew)
-    return "gradle"
-
-
 def build_module() -> bool:
     """構建 Xposed 模組 APK"""
-    gradle = _gradle_cmd()
     print("🔨 構建 Xposed 模組...")
-
-    subprocess.run([gradle, "clean"], cwd=MODULE_DIR, check=False)
-    r = subprocess.run([gradle, "assembleRelease"], cwd=MODULE_DIR)
-    if r.returncode != 0:
-        print("❌ 構建失敗")
+    try:
+        build_java_app(MODULE_DIR, build_task=["clean", "assembleRelease"])
+    except Exception as e:
+        print(f"❌ 構建失敗: {e}")
         return False
 
     if not APK_OUTPUT.exists():
         print(f"❌ APK 未找到: {APK_OUTPUT}")
         return False
 
-    sha = subprocess.run(
-        ["sha1sum", str(APK_OUTPUT)], capture_output=True, text=True
-    )
+    sha = subprocess.run(["sha1sum", str(APK_OUTPUT)], capture_output=True, text=True)
     sha1 = sha.stdout.split()[0] if sha.returncode == 0 else "?"
     print(f"✅ 構建成功  {APK_OUTPUT.name}  SHA1: {sha1}")
     return True
@@ -54,10 +44,10 @@ def install_module(adb: Adb) -> bool:
         return False
 
     print(f"📲 安裝到設備... (adb: {adb.adb_path})")
-
-    result = adb.run(["install", "-r", str(APK_OUTPUT)], check=False)
-    if result.returncode != 0:
-        print(f"❌ 安裝失敗\n{result.stdout}\n{result.stderr}")
+    try:
+        install_apk(APK_OUTPUT, adb=adb)
+    except Exception as e:
+        print(f"❌ 安裝失敗: {e}")
         return False
 
     print("✅ 安裝成功")

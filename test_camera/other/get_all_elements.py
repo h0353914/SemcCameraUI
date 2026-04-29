@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 """
-Get all UI elements from the current screen using UiAgent.
-
-This script retrieves all resource-ids and their details from the current
-screen displayed on the Android device.
+使用 UiAgent 取得目前畫面上的所有 UI 元件。
 """
 
 from __future__ import annotations
@@ -16,36 +13,71 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from test_camera.uiagent_client import (  # noqa: E402
-    is_uiagent_installed,
-    list_rids,
     list_all_elements,
     list_all_elements_with_class,
 )
 from tools_Common.adb import Adb  # noqa: E402
 
+TMP_DIR = ROOT / ".tmp"
+
+
+def elements_to_key_format(elements: list[dict]) -> dict:
+    """
+    將 elements 清單轉換成 key.json 格式。
+
+    格式：key 為 resource_id，value 為文字或詳細物件
+    """
+    result = {}
+
+    for i, elem in enumerate(elements, 1):
+        rid = elem.get("rid", "").strip()
+        text = elem.get("text", "").strip()
+        desc = elem.get("desc", "").strip()
+        cls = elem.get("class", "").strip()
+        bounds = elem.get("bounds", "").strip()
+
+        obj = {}
+        if rid:
+            obj["rid"] = rid
+        if text:
+            obj["text"] = text
+        if desc:
+            obj["desc"] = desc
+        if cls:
+            obj["class"] = cls
+        if bounds:
+            obj["bounds"] = bounds
+        result[i] = obj if obj else rid
+
+    return result
+
+
+def auto_save_key_file(elements: list[dict]) -> bool:
+    """
+    自動儲存 elements 為 .tmp/elements_key.json（key.json 格式）。
+    """
+    try:
+        TMP_DIR.mkdir(exist_ok=True)
+        key_data = elements_to_key_format(elements)
+
+        key_file = TMP_DIR / "elements_key.json"
+        key_file.write_text(
+            json.dumps(key_data, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
+        return True
+    except Exception as e:
+        print(f"自動儲存 key.json 失敗: {e}", file=sys.stderr)
+        return False
+
 
 def get_all_elements(adb: Adb) -> dict:
     """
-    Get all UI elements from the current screen.
+    取得目前畫面上所有 UI 元件（rid + text + desc + bounds）。
 
     Returns:
-        dict: Contains:
-            - rids: List of all resource-ids on the screen
-            - count: Total number of elements found
-            - status: Operation status ("success" or "error")
-            - message: Status message or error description
+        dict: status / message / elements / count
     """
     try:
-        # Check if UiAgent is installed
-        if not is_uiagent_installed(adb):
-            return {
-                "status": "error",
-                "message": "UiAgent is not installed on the device",
-                "elements": [],
-                "count": 0,
-            }
-
-        # Get all elements (rid + text) from the current screen
         elements = list_all_elements(adb)
 
         return {
@@ -64,71 +96,14 @@ def get_all_elements(adb: Adb) -> dict:
         }
 
 
-def get_all_elements_with_details(adb: Adb) -> dict:
-    """
-    Get all UI elements with detailed information.
-
-    Returns:
-        dict: Contains detailed information about each element including
-              position, size, and other properties if available.
-    """
-    try:
-        if not is_uiagent_installed(adb):
-            return {
-                "status": "error",
-                "message": "UiAgent is not installed on the device",
-                "elements": [],
-            }
-
-        # Get all rids
-        rids = list_rids(adb, dedupe=True)
-
-        # Build element list with details
-        elements = []
-        for rid in rids:
-            element = {
-                "resource_id": rid,
-                "exists": True,  # We know it exists since we got it from list_rids
-            }
-            elements.append(element)
-
-        return {
-            "status": "success",
-            "message": f"Retrieved details for {len(elements)} elements",
-            "elements": elements,
-            "count": len(elements),
-        }
-
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Error retrieving element details: {str(e)}",
-            "elements": [],
-        }
-
-
 def get_all_elements_with_class(adb: Adb) -> dict:
     """
-    Get all UI elements with class information.
+    取得目前畫面上所有 UI 元件，含 class 資訊。
 
     Returns:
-        dict: Contains:
-            - elements: List of all elements with resource_id, text, and class
-            - count: Total number of elements found
-            - status: Operation status ("success" or "error")
-            - message: Status message or error description
+        dict: status / message / elements / count
     """
     try:
-        # Check if UiAgent is installed
-        if not is_uiagent_installed(adb):
-            return {
-                "status": "error",
-                "message": "UiAgent is not installed on the device",
-                "elements": [],
-                "count": 0,
-            }
-
-        # Get all elements with class information from the current screen
         elements = list_all_elements_with_class(adb)
 
         return {
@@ -148,12 +123,7 @@ def get_all_elements_with_class(adb: Adb) -> dict:
 
 
 def print_elements(elements_info: dict) -> None:
-    """
-    Pretty print the elements information.
-
-    Args:
-        elements_info: Dictionary returned from get_all_elements()
-    """
+    """格式化印出元件資訊。"""
     print("\n" + "=" * 100)
     print("UI Elements from Current Screen")
     print("=" * 100)
@@ -197,18 +167,9 @@ def print_elements(elements_info: dict) -> None:
 
 
 def save_elements_to_json(
-    elements_info: dict, output_file: str = "screen_elements.json"
+    elements_info: dict, output_file: str = ".tmp/screen_elements.json"
 ) -> bool:
-    """
-    Save the elements information to a JSON file.
-
-    Args:
-        elements_info: Dictionary returned from get_all_elements()
-        output_file: Path to save the JSON file
-
-    Returns:
-        bool: True if successful, False otherwise
-    """
+    """將元件資訊儲存為 JSON 檔案。"""
     try:
         output_path = Path(output_file)
         with open(output_path, "w", encoding="utf-8") as f:
@@ -221,43 +182,40 @@ def save_elements_to_json(
 
 
 def main():
-    """Main entry point."""
+    """CLI 入口點。"""
     import argparse
 
     parser = argparse.ArgumentParser(
-        description="Get all UI elements from current Android screen"
+        description="取得目前 Android 畫面上的所有 UI 元件"
     )
     parser.add_argument(
-        "--details",
+        "--class",
+        dest="with_class",
         action="store_true",
-        help="Get detailed information for each element",
+        help="同時取得每個元件的 class 資訊",
     )
-    parser.add_argument(
-        "--save", type=str, default=None, help="Save results to JSON file"
-    )
-    parser.add_argument("--quiet", action="store_true", help="Suppress console output")
+    parser.add_argument("--save", type=str, default=None, help="將結果儲存為 JSON 檔案")
+    parser.add_argument("--quiet", action="store_true", help="不輸出至 console")
 
     args = parser.parse_args()
     adb = Adb()
 
-    # Get elements
-    if args.details:
-        elements_info = get_all_elements_with_details(adb)
+    if args.with_class:
+        elements_info = get_all_elements_with_class(adb)
     else:
         elements_info = get_all_elements(adb)
 
-    # Print results
     if not args.quiet:
-        if args.details and "elements" in elements_info:
-            print(json.dumps(elements_info, indent=2, ensure_ascii=False))
-        else:
-            print_elements(elements_info)
+        print_elements(elements_info)
 
-    # Save to file if requested
+    # 預設自動儲存為 key.json 格式
+    if elements_info.get("status") == "success" and elements_info.get("elements"):
+        auto_save_key_file(elements_info["elements"])
+
+    # 若指定 --save，則額外儲存
     if args.save:
         save_elements_to_json(elements_info, args.save)
 
-    # Return success status
     return 0 if elements_info.get("status") == "success" else 1
 
 

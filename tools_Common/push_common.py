@@ -318,3 +318,40 @@ def copy_compiled_file(
             print(f"Successfully copied to {dest_path}")
         except Exception as exc:
             print(f"Failed to copy to {dest_path}: {exc}")
+
+
+def install_apk(
+    apk_path: str | Path,
+    *,
+    adb: Adb,
+    force_stop_package: str | None = None,
+    timeout: int = 120,
+) -> None:
+    """
+    使用 adb install -r 安裝 APK 到設備。
+
+    Args:
+        apk_path: 本地 APK 檔案路徑
+        adb: Adb 實例
+        force_stop_package: 安裝前強制停止的套件名稱（可選）
+        timeout: 超時秒數
+
+    Raises:
+        FileNotFoundError: 如果 APK 不存在
+        RuntimeError: 如果安裝失敗
+    """
+    apk = Path(apk_path)
+    if not apk.exists():
+        raise FileNotFoundError(f"找不到 APK：{apk}")
+
+    if force_stop_package:
+        try:
+            adb.shell(f"am force-stop {force_stop_package}", check=False)
+        except Exception as exc:
+            print(f"Force-stop failed: {exc}")
+
+    print(f"Installing: {apk.name}")
+    result = adb.run(["install", "-r", str(apk)], check=False, timeout=timeout)
+    if result.returncode != 0:
+        err = (result.stderr or result.stdout or "").strip()
+        raise RuntimeError(f"安裝失敗 ({apk.name}): {err}")
