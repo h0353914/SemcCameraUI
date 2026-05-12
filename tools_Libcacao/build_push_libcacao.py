@@ -9,7 +9,7 @@ sys.path.insert(0, str(SEMCCAMERA_ROOT))
 
 
 from tools_Common.parse_args import parse_args  # noqa: E402
-from tools_Common.push_common import copy_compiled_file, push_so_list  # noqa: E402
+from tools_Common.push_common import copy_compiled_file, push_lib_list  # noqa: E402
 from tools_Common.adb import Adb  # noqa: E402
 
 LINEAGE_ROOT = Path.home() / "lineageos"
@@ -41,7 +41,7 @@ def push_staged_libs(adb: Adb, out_root: Path) -> None:
         lib_names = [lib_path.name for lib_path in libs]
         print(f"[PUSH] 推送 {len(lib_names)} 個檔案到 {arch}")
         try:
-            push_so_list(
+            push_lib_list(
                 lib_names,
                 arch=arch,
                 local_paths=libs,
