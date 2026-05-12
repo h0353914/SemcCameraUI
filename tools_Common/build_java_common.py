@@ -91,21 +91,45 @@ def _run_gradle(
 
 def build_java_app(
     source_dir: Path,
-    output_apk: Path,
-    build_task: str = ":app:assembleRelease",
-) -> Path:
-    gradle_cmd = [_resolve_gradle_executable(source_dir, None), build_task]
+    output_apk: Optional[Path] = None,
+    build_task: str | list[str] = ":app:assembleRelease",
+) -> Optional[Path]:
+    """
+    執行 Gradle 任務，並可選擇性地複製輸出 APK。
 
+    Args:
+        source_dir: 專案根目錄（含 gradlew）
+        output_apk: 複製目標路徑；為 None 時跳過複製（適用於多任務情境）
+        build_task: 單個或多個 Gradle 任務名稱
+
+    Returns:
+        output_apk（已複製），或 None（未指定 output_apk 時）
+
+    Raises:
+        JavaBuildError: 若 Gradle 執行失敗
+        FileNotFoundError: 若 output_apk 指定但找不到編譯輸出
+    """
+    if isinstance(build_task, str):
+        tasks = [build_task]
+    else:
+        tasks = build_task
+
+    gradle_cmd = [_resolve_gradle_executable(source_dir, None)] + tasks
     result = _run_gradle(source_dir, gradle_cmd, _prepare_env())
     if result.returncode != 0:
         raise JavaBuildError(
-            task=build_task,
+            task=", ".join(tasks),
             returncode=result.returncode,
             stdout="",
             stderr="",
         )
 
-    candidate_apk = _default_apk_output(source_dir, build_task)
+    if output_apk is None:
+        return None
+
+    # 使用第一個非 clean 任務決定 variant
+    primary_task = next((t for t in tasks if t != "clean"), tasks[0])
+    candidate_apk = _default_apk_output(source_dir, primary_task)
     if not candidate_apk.exists():
         raise FileNotFoundError(f"找不到編譯輸出 APK：{candidate_apk}")
 
