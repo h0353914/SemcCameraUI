@@ -5,24 +5,58 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python 偵錯工具: 目前檔案",
+            "name": "Python 目前檔案",
             "type": "debugpy",
             "request": "launch",
             "program": "${file}",
             "console": "integratedTerminal"
         },
         {
-            "name": "Python test",
+            "name": "test -c",
             "type": "debugpy",
             "request": "launch",
             "program": "test_camera/test_camera.py",
             "console": "integratedTerminal",
             "args": [
-                // "-m",
-                // "s",
-                "-f",
+                "-c",
+                // "v"
+                // "s960",
                 // "--device",
                 // "QV700WMR11"
+            ]
+        },
+        {
+            "name": "test m",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "test_camera/test_camera.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-m",
+                // "v"
+                "s960",
+                // "--device",
+                // "QV700WMR11"
+            ]
+        },
+        {
+            "name": "test help",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "test_camera/test_camera.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-h",
+            ]
+        },
+        {
+            "name": "build_push_libcacao_9 re",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "tools_Libcacao/build_push_libcacao_9.py",
+            "console": "integratedTerminal",
+            "args": [
+                "-re",
             ]
         }
     ]

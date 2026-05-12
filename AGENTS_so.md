@@ -22,10 +22,19 @@ Libcacao/
  │  ├─ include/
  │  └─ src/
  ├─ libcacao_process_ctrl_gateway/
+ │  ├─ Android.bp
+ │  ├─ include/
+ │  └─ src/
  ├─ libcacao_service/
+ .
+ .
+ .
  ├─ libimageprocessorjni/
  ├─ prebuilts/
  └─ version_scripts/
+
+ghidra/
+ └─ ghidra-mcp     
 
 tools_Libcacao/
  ├─ build_push_libcacao.py
@@ -65,21 +74,62 @@ python test_camera/test_camera.py -c
 ### 連線資訊
 
 ```
-無頭:   http://172.18.48.1:8091  (支援任意 .so)
+無頭1:   http://localhost:8091  (載入原版_32)
+無頭2:   http://localhost:8092  (載入原版_64)
+無頭1:   http://localhost:8093  (載入編譯_32)
+無頭2:   http://localhost:8094  (載入編譯_64)
 ```
 
 ### 載入二進制文件
 
 ```bash
-curl -X POST -d "file=xxxx.so" http://172.18.48.1:8091/load_program
+curl -X POST -d "file=xxxx.so" http://localhost:809x/load_program
 ```
 
-### 運行自動分析
+無頭 API 工作流程（可直接用版）
 
-自動識別函數、字符串、資料型別：
+1. Load binary
 
 ```bash
-curl -X POST http://172.18.48.1:8091/run_analysis
+curl -X POST \
+  -H "Authorization: Bearer abc123456" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "file": "/projects/tools_Libcacao/refs/so_32/libimageprocessorjni.so"
+  }' \
+  http://localhost:8091/load_program
+```
+
+2. Run auto-analysis
+
+```bash
+curl -X POST \
+  -H "Authorization: Bearer abc123456" \
+  http://localhost:8091/run_analysis
+```
+
+3. List functions
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer abc123456" \
+  "http://localhost:8091/list_functions?limit=20"
+```
+
+4. Decompile function
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer abc123456" \
+  "http://localhost:8091/decompile_function?address=0x401000"
+```
+
+5. Get metadata
+
+```bash
+curl -X GET \
+  -H "Authorization: Bearer abc123456" \
+  http://localhost:8091/get_metadata
 ```
 
 ### 檔案存放
