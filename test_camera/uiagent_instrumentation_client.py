@@ -25,7 +25,9 @@ from pathlib import Path
 from typing import Optional
 
 ROOT = Path(__file__).resolve().parents[1]  # /home/h/lineageos/device/sony/SemcCameraUI
-TEST_CAMERA_DIR = Path(__file__).resolve().parent  # /home/h/lineageos/device/sony/SemcCameraUI/test_camera
+TEST_CAMERA_DIR = (
+    Path(__file__).resolve().parent
+)  # /home/h/lineageos/device/sony/SemcCameraUI/test_camera
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(TEST_CAMERA_DIR))
 
@@ -196,7 +198,7 @@ class UiAgentInstrumentationClient:
         """等待 ClickTarget 出現"""
         deadline = time.monotonic() + timeout_ms / 1000.0
         while time.monotonic() < deadline:
-            if target.resource_id and self.exists_rid(target.resource_id):
+            if target.rid and self.exists_rid(target.rid):
                 return True
             if target.text and self.exists_text(target.text):
                 return True
@@ -205,26 +207,27 @@ class UiAgentInstrumentationClient:
 
     def wait_then_click(
         self,
-        wait_target: ClickTarget,
-        click_target: Optional[ClickTarget] = None,
+        click_target: ClickTarget,
         timeout_ms: int = 3000,
         raise_on_fail: bool = True,
     ) -> bool:
         """先等待 wait_target 出現，再點擊 click_target（若未指定則點擊 wait_target）"""
-        if click_target is None:
-            click_target = wait_target
-        return_value = self.wait_exists(wait_target, timeout_ms=timeout_ms)
-        print(f"等待 {wait_target.key_name} 出現?", return_value)
-        if return_value:
-            if click_target.resource_id:
-                return_value = self.click_rid(click_target.resource_id)
-            elif click_target.text:
-                return_value = self.click_text(click_target.text)
-            print(f"點擊{wait_target.key_name} {return_value}")
-            return return_value
-        if raise_on_fail:
-            raise RuntimeError(f"❌ 目標未出現: {wait_target.key_name}, timeout={timeout_ms}ms")
-        return False
+        key_name = click_target.key_name
+
+        return_wait = self.wait_exists(click_target, timeout_ms=timeout_ms)
+        print(f"等待 {key_name} 出現?", return_wait)
+        if not return_wait and raise_on_fail:
+            raise RuntimeError(f"❌ 等待失敗: {key_name}, timeout={timeout_ms}ms")
+
+        if click_target.rid:
+            return_click = self.click_rid(click_target.rid)
+        elif click_target.text:
+            return_click = self.click_text(click_target.text)
+        print(f"點擊{key_name} {return_click}")
+
+        if not return_click and raise_on_fail:
+            raise RuntimeError(f"❌ 點擊失敗: {key_name}")
+        return return_wait and return_click
 
     def click_permission_button(self, button_type: str) -> bool:
         """

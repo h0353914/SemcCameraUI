@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <boolean name="do-not-show-again-standard-slow-motion" value="true" />
+    <boolean name="do-not-show-again-super-slow-motion-shot" value="true" />
+    <boolean name="do-not-show-again-super-slow-motion" value="true" />
+    <boolean name="do-not-show-again-tutorial-setup-wizard" value="true" />
+</map>

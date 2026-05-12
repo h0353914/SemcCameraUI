@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+"""查詢指定 resource-id 的 UI 元件資訊。"""
 from pathlib import Path
 import sys
 
@@ -12,13 +14,13 @@ adb = Adb()
 
 
 print(
-    query_elements(adb, resource_id="com.sonyericsson.android.camera:id/hint_text_message")
+    query_elements(adb, rid="com.sonyericsson.android.camera:id/hint_text_message")
 )
 print()
 
 print(
     query_elements(
         adb,
-        resource_id="com.sonyericsson.android.camera:id/mode_switch_animation_name"
+        rid="com.sonyericsson.android.camera:id/mode_switch_animation_name"
     )
 )

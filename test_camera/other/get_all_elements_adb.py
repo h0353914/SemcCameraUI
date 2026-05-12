@@ -1,17 +1,13 @@
 #!/usr/bin/env python3
 """
-Get all UI elements from the current screen using adb dumpsys.
-
-This script retrieves all resource-ids and their details from the current
-screen displayed on the Android device using adb window dump commands,
-without requiring UiAgent service to be installed.
+使用 adb uiautomator dump 取得目前畫面上的所有 UI 元件，
+不需要安裝 UiAgent 服務。
 """
 
 from __future__ import annotations
 
 import json
 import sys
-import tempfile
 import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Optional
@@ -19,188 +15,148 @@ from typing import Optional
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
+from test_camera.other.get_all_elements import auto_save_key_file
 from tools_Common.adb import Adb  # noqa: E402
+
+TMP_DIR = ROOT / ".tmp"
+
+
 
 
 def get_window_dump(adb: Adb) -> Optional[str]:
-    """
-    Get the window hierarchy dump from the device using uiautomator dump.
-
-    Returns:
-        str: XML content of the window hierarchy, or None if unable to retrieve.
-    """
+    """從裝置取得視窗層級資訊（XML）。"""
     try:
-        # Use uiautomator dump to get the window hierarchy as XML
-        # The dump file is created at /sdcard/window_dump.xml
-        p = adb.shell("uiautomator dump /sdcard/window_dump.xml", check=True)
-        
-        # Pull the file from device
-        with tempfile.TemporaryDirectory() as tmpdir:
-            tmp_path = Path(tmpdir) / "window_dump.xml"
-            adb.run(["pull", "/sdcard/window_dump.xml", str(tmp_path)], check=True)
-            
-            if tmp_path.exists():
-                return tmp_path.read_text()
-        
+        adb.shell("uiautomator dump /sdcard/window_dump.xml", check=True)
+
+        TMP_DIR.mkdir(exist_ok=True)
+        tmp_path = TMP_DIR / "window_dump.xml"
+        adb.run(["pull", "/sdcard/window_dump.xml", str(tmp_path)], check=True)
+
+        if tmp_path.exists():
+            return tmp_path.read_text()
+
         return None
     except Exception as e:
-        print(f"Error retrieving window dump: {e}", file=sys.stderr)
+        print(f"取得 window dump 失敗: {e}", file=sys.stderr)
         return None
 
 
 def parse_window_dump(xml_content: str) -> list[dict]:
-    """
-    Parse the window hierarchy XML and extract all elements with resource-ids.
-
-    Args:
-        xml_content: XML string from uiautomator dump
-
-    Returns:
-        list: List of dicts containing resource-id and text for each UI element
-    """
+    """解析 XML 內容，提取所有含 resource-id 的 UI 元件。"""
     elements = []
-    
+
     try:
         root = ET.fromstring(xml_content)
-        
-        # Walk through all elements in the hierarchy
+
         for elem in root.iter():
-            # Look for resource-id and text attributes
             resource_id = elem.get("resource-id", "").strip()
             text = elem.get("text", "").strip()
-            
-            # Include elements with resource-id, with or without text
+
             if resource_id:
-                element_data = {
-                    "resource_id": resource_id,
+                elements.append({
+                    "rid": resource_id,
                     "text": text,
                     "class": elem.get("class", "").strip(),
-                    "content_desc": elem.get("content-desc", "").strip(),
+                    "desc": elem.get("content-desc", "").strip(),
                     "bounds": elem.get("bounds", "").strip(),
-                }
-                elements.append(element_data)
-    
+                })
+
     except ET.ParseError as e:
-        print(f"Error parsing XML: {e}", file=sys.stderr)
+        print(f"XML 解析失敗: {e}", file=sys.stderr)
         return []
-    
+
     return elements
 
 
 def get_all_elements(adb: Adb) -> dict:
-    """
-    Get all UI elements from the current screen via adb.
+    """經由 adb 取得目前畫面上所有 UI 元件。
 
     Returns:
-        dict: Contains:
-            - elements: List of all elements with resource_id and text
-            - count: Total number of elements found
-            - status: Operation status ("success" or "error")
-            - message: Status message or error description
+        dict: status / message / elements / count
     """
     try:
-        # Retrieve the window dump
         xml_content = get_window_dump(adb)
-        
+
         if not xml_content:
             return {
                 "status": "error",
-                "message": "Failed to retrieve window dump from device",
+                "message": "無法從裝置取得 window dump",
                 "elements": [],
                 "count": 0,
             }
-        
-        # Parse the XML to extract elements
+
         elements = parse_window_dump(xml_content)
-        
+
         return {
             "status": "success",
-            "message": f"Found {len(elements)} elements on screen",
+            "message": f"共發現 {len(elements)} 個元件",
             "elements": elements,
             "count": len(elements),
         }
-    
+
     except Exception as e:
         return {
             "status": "error",
-            "message": f"Error retrieving elements: {str(e)}",
+            "message": f"取得元件失敗: {str(e)}",
             "elements": [],
             "count": 0,
         }
 
 
-def get_all_elements_with_details(adb: Adb) -> dict:
-    """
-    Get all UI elements with detailed information.
-
-    Returns:
-        dict: Contains detailed information about each element including
-              position, size, bounds, and other properties.
-    """
-    try:
-        # Retrieve the window dump
-        xml_content = get_window_dump(adb)
-        
-        if not xml_content:
-            return {
-                "status": "error",
-                "message": "Failed to retrieve window dump from device",
-                "elements": [],
-            }
-        
-        # Parse the XML to extract elements with all details
-        elements = parse_window_dump(xml_content)
-        
-        return {
-            "status": "success",
-            "message": f"Retrieved details for {len(elements)} elements",
-            "elements": elements,
-            "count": len(elements),
-        }
-    
-    except Exception as e:
-        return {
-            "status": "error",
-            "message": f"Error retrieving element details: {str(e)}",
-            "elements": [],
-        }
-
-
 def get_resource_ids(adb: Adb) -> list[str]:
-    """
-    Get a deduplicated list of all resource-ids on the current screen.
-
-    Returns:
-        list: List of unique resource-ids
-    """
+    """取得目前畫面上所有不重複的 resource-id 清單。"""
     result = get_all_elements(adb)
-    
+
     if result["status"] != "success":
         return []
-    
-    # Extract unique resource-ids
-    rids = set()
-    for elem in result["elements"]:
-        rid = elem.get("resource_id", "").strip()
-        if rid:
-            rids.add(rid)
-    
-    return sorted(list(rids))
+
+    rids = {elem.get("rid", "").strip() for elem in result["elements"]}
+    rids.discard("")
+    return sorted(rids)
 
 
 def print_elements(elements: list[dict]) -> None:
-    """Pretty print the elements list."""
+    """格式化印出元件清單。"""
     print(json.dumps(elements, indent=2, ensure_ascii=False))
 
 
 if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        description="經由 adb uiautomator dump 取得 UI 元件"
+    )
+    parser.add_argument(
+        "--rids-only", action="store_true", help="僅印出不重複的 resource-id 清單"
+    )
+    parser.add_argument(
+        "--save",
+        type=str,
+        default=None,
+        help="將結果儲存為 JSON 檔案（預設: .tmp/screen_elements_adb.json）",
+    )
+    args = parser.parse_args()
     adb = Adb()
-    result = get_all_elements(adb)
-    
-    if result["status"] == "success":
-        print(f"✓ Found {result['count']} elements")
-        print("\nElements:")
-        print_elements(result["elements"])
+
+    if args.rids_only:
+        rids = get_resource_ids(adb)
+        print(json.dumps(rids, indent=2, ensure_ascii=False))
     else:
-        print(f"✗ Error: {result['message']}")
-        sys.exit(1)
+        result = get_all_elements(adb)
+        if result["status"] == "success":
+            # 預設自動儲存為 key.json 格式
+            if result.get("elements"):
+                auto_save_key_file(result["elements"])
+            
+            if not args.save:
+                print_elements(result["elements"])
+            else:
+                save_path = Path(args.save)
+                save_path.parent.mkdir(exist_ok=True)
+                save_path.write_text(
+                    json.dumps(result, indent=2, ensure_ascii=False), encoding="utf-8"
+                )
+                print(f"已儲存至: {save_path.resolve()}")
+        else:
+            print(f"錯誤: {result['message']}", file=sys.stderr)
+            sys.exit(1)
