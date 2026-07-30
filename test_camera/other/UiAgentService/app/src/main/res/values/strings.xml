@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UI Agent</string>
+
+    <!-- Main screen -->
+    <string name="status">Status</string>
+    <string name="open_accessibility_settings">Open Accessibility Settings</string>
+
+    <string name="enabled">Enabled</string>
+    <string name="disabled">Disabled</string>
+
+    <!-- 3-line status banner at top -->
+    <string name="status_lines">Accessibility: %1$s\nBroadcast: ready\nMode: adb am broadcast</string>
+
+    <string name="pc_usage_hint">PC usage (broadcast):\n1) Enable UI Agent accessibility service\n2) adb shell am broadcast -n com.example.uiagent/.UiAgentCmdReceiver -a com.example.uiagent.CMD --es cmd ping\n3) exists: --es cmd exists_rid --es rid com.xxx:id/yyy\n4) click:  --es cmd click_rid  --es rid com.xxx:id/yyy</string>
+</resources>

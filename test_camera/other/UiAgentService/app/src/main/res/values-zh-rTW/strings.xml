@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UI Agent</string>
+
+    <!-- 主畫面 -->
+    <string name="status">狀態</string>
+    <string name="open_accessibility_settings">開啟無障礙設定</string>
+    <string name="enabled">已啟用</string>
+    <string name="disabled">未啟用</string>
+
+    <!-- 頂部三行狀態顯示 -->
+    <string name="status_lines">無障礙：%1$s\nBroadcast：就緒\n模式：adb am broadcast</string>
+
+    <string name="pc_usage_hint">PC 使用方式（broadcast）：\n1) 啟用 UI Agent 的無障礙服務\n2) adb shell am broadcast -n com.example.uiagent/.UiAgentCmdReceiver -a com.example.uiagent.CMD --es cmd ping\n3) exists：--es cmd exists_rid --es rid com.xxx:id/yyy\n4) click： --es cmd click_rid  --es rid com.xxx:id/yyy</string>
+</resources>
