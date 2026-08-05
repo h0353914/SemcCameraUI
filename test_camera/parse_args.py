@@ -83,4 +83,12 @@ def parse_args(tests) -> argparse.Namespace:
         default=0,
         help="每次測試之間的間隔秒數，預設 0 秒",
     )
+    parser.add_argument(
+        "--retreat",
+        "-r",
+        dest="retreat",
+        default=False,
+        action="store_true",
+        help="測試失敗時退回上一個測試重試（預設: 不退回）",
+    )
     return parser.parse_args()

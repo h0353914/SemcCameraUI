@@ -1177,7 +1177,7 @@ def run_camera_test_flow(
 
     idx = 0
     n = 1
-    re = False  # 標記是否已回退過，避免無限迴圈
+    retreated = False  # 標記是否已回退過，避免無限迴圈
     while idx < len(test_list):
         mode = test_list[idx]
 
@@ -1185,14 +1185,14 @@ def run_camera_test_flow(
 
         if try_mode_attempt(mode, 60 + 80 * (n - 1)):
             idx += 1  # 移動到下一個測試項目
-            re = False  # 重置回退標記
+            retreated = False  # 重置回退標記
             n = 1  # 重置重試次數
             continue
         else:
-            if idx > 0 and not re:  # 如果不是第一個測試，且還沒回退過，就退到前一個測試
+            if args.retreat and idx > 0 and not retreated:  # 如果不是第一個測試，且還沒回退過，就退到前一個測試
                 idx = idx - 1  # 回退到前一個測試項目
                 mode = test_list[idx]
-                re = True  # 標記已回退
+                retreated = True  # 標記已回退
 
             n = n + 1  # 增加重試次數
             if n > max_retry:
