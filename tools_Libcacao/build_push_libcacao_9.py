@@ -31,11 +31,6 @@ MODULES = [
 ]
 
 
-# MAGISK_MODULE_DIR = "/data/adb/modules/sony_camera"
-MAGISK_MODULE_DIR = ""
-MAGISK_LIB_DIR = f"{MAGISK_MODULE_DIR}/system/lib"
-MAGISK_LIB64_DIR = f"{MAGISK_MODULE_DIR}/system/lib64"
-
 # ── 原版 .so 參考目錄 ──
 REFS_32 = SEMCCAMERA_ROOT / "tools_Libcacao" / "refs" / "so_32"
 REFS_64 = SEMCCAMERA_ROOT / "tools_Libcacao" / "refs" / "so_64"
@@ -88,16 +83,21 @@ def restore_original_libs(out_root: Path) -> None:
 def push_staged_libs(
     adb: Adb,
     out_root: Path,
+    magisk_module_dir: str,
     module_filter: set[str] | None = None,
 ) -> None:
     """推送 staged 的 .so 到 Magisk 模塊目錄（繞過 dm-verity）
 
     Args:
+        magisk_module_dir: Magisk 模組目錄路徑，例如 /data/adb/modules/sony_camera
         module_filter: 若指定，只推送名稱在集合中的模組（不含 .so 副檔名）
     """
 
     if module_filter:
         print(f"[FILTER] 只推送模組: {', '.join(sorted(module_filter))}")
+
+    magisk_lib_dir = f"{magisk_module_dir}/system/lib"
+    magisk_lib64_dir = f"{magisk_module_dir}/system/lib64"
 
     sources: list[Path] = []
     destinations: list[str] = []
@@ -112,7 +112,7 @@ def push_staged_libs(
             print(f"[WARN] staged {arch} 目錄是空的: {arch_dir}")
             continue
 
-        remote_dir = f"{MAGISK_LIB64_DIR if arch == 'lib64' else MAGISK_LIB_DIR}"
+        remote_dir = f"{magisk_lib64_dir if arch == 'lib64' else magisk_lib_dir}"
         for lib_path in libs:
             if module_filter and lib_path.stem not in module_filter:
                 continue
@@ -123,7 +123,7 @@ def push_staged_libs(
         print("[WARN] 沒有檔案需要推送")
         return
 
-    print(f"[PUSH] 推送 {len(sources)} 個檔案到 {MAGISK_LIB_DIR} / {MAGISK_LIB64_DIR}")
+    print(f"[PUSH] 推送 {len(sources)} 個檔案到 {magisk_lib_dir} / {magisk_lib64_dir}")
     push(sources, destinations, adb=adb)
 
 
@@ -276,6 +276,20 @@ def main() -> int:
                 "可用模組: " + ", ".join(name for name, _ in MODULES)
             ),
         )
+        ap.add_argument(
+            "--magisk-module-dir",
+            "-mag",
+            dest="magisk_module_dir",
+            nargs="?",
+            const="/data/adb/modules/sony_camera",
+            default="",
+            metavar="DIR",
+            help=(
+                "Magisk 模組目錄路徑，預設空字串（推到 /system 本體）。\n"
+                "單獨指定 -mag / --magisk-module-dir 不帶值時，預設為 /data/adb/modules/sony_camera。\n"
+                "也可自行指定其他路徑，例如: -mag /data/adb/modules/other_module"
+            ),
+        )
 
     args = parse_args(
         "編譯並推送 libcacao 相關的 .so 到設備 (CMake + NDK)",
@@ -347,7 +361,7 @@ def main() -> int:
             copy_binaries(libcacao_root, out_root)
 
         if args.push:
-            push_staged_libs(adb, out_root, module_filter)
+            push_staged_libs(adb, out_root, args.magisk_module_dir, module_filter)
             if not args.reboot:
                 return 0
             print("\n[INFO] 正在重啟設備...")
