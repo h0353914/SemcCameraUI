@@ -551,6 +551,9 @@ class CameraController:
                 "STATE_慢動作模式", Field.TEXT
             )  # 取得慢動作模式
             param = SLOW_STATE_TO_KEY.get(current_text)
+        elif self.ui.exists("STATE_手動模式"):  # 如果在手動模式
+            mode = "manual"
+            param = "manual"
         else:  # 如果在一般模式
             mode = "main"
             current_text = self.ui.field_by_rid(
@@ -695,6 +698,88 @@ def test_video(context) -> None:
     ui.click_then_appear("B_停止錄影", "B_錄影鍵", timeout_ms=SAVE_TIMEOUT)
 
 
+# 「一般設定」區塊，拍照/錄影/手動模式共用
+GENERAL_SETTINGS_CHECK = [
+    ("儲存地點", "S_儲存地點"),
+    ("觸控拍攝", "S_觸控拍攝"),
+    ("格狀線條", "S_格狀線條"),
+    ("自動相片預覽", "S_自動相片預覽"),
+    ("使用相機鍵連拍", "S_使用相機鍵連拍"),
+    ("設定音量鍵的其他功能", "S_設定音量鍵的其他功能"),
+    ("資料儲存", "S_資料儲存"),
+    ("使用相機鍵啟動", "S_使用相機鍵啟動"),
+    ("說明", "S_說明"),
+    ("重設設定", "S_重設設定"),
+]
+
+
+def test_manual(context) -> None:
+    """手動模式拍照測試流程"""
+    ui = context.resources.ui
+    logger = context.resources.logger
+
+    logger.info("測試手動模式...")
+    logger.info("切換到手動模式...")
+    context.camera.click_camera_mode(mode="manual", param="manual")
+
+    logger.info("按下快門...")
+    ui.click_then_disappear("B_拍照鍵", "B_模式通用")
+    ui.wait_exists("B_模式通用", timeout_ms=SAVE_TIMEOUT)  # 等待快門鍵重新出現
+
+
+def test_front_camera(context) -> None:
+    """前鏡頭拍照測試流程"""
+    ui = context.resources.ui
+    logger = context.resources.logger
+
+    logger.info("測試前鏡頭拍照...")
+    logger.info("切換到拍照模式...")
+    context.camera.click_camera_mode(mode="main", param="photo")
+
+    logger.info("切換到正面相機...")
+    ui.wait_then_click("B_正反鏡頭切換")
+    ui.wait_then_click("B_正反鏡頭切換")
+    ui.wait_exists("STATE_目前為正面相機", timeout_ms=TIMEOUT)
+
+    try:
+        logger.info("按下快門（正面相機）...")
+        ui.click_then_disappear("B_拍照鍵", "B_模式通用")
+        ui.wait_exists("B_模式通用", timeout_ms=SAVE_TIMEOUT)
+    finally:
+        logger.info("切換回主相機...")
+        ui.wait_then_click("B_正反鏡頭切換", raise_on_fail=False)
+        ui.wait_then_click("B_正反鏡頭切換", raise_on_fail=False)
+        ui.wait_exists(
+            "STATE_目前為主相機", timeout_ms=TIMEOUT, raise_on_fail=False
+        )
+
+
+def test_color_brightness(context) -> None:
+    """色彩和亮度調整測試流程：調整顏色/亮度滑桿後，確認仍能正常拍照存檔"""
+    ui = context.resources.ui
+    logger = context.resources.logger
+
+    logger.info("測試色彩和亮度調整...")
+    logger.info("切換到拍照模式...")
+    context.camera.click_camera_mode(mode="main", param="photo")
+
+    try:
+        logger.info("開啟色彩和亮度調整面板...")
+        ui.click_then_appear("B_色彩和亮度", "ANCHOR_色彩和亮度調整面板")
+
+        logger.info("調整亮度滑桿...")
+        uiagent_client.swipe(ui.adb, 540, 1356, 750, 1356, 300)
+        logger.info("調整顏色滑桿...")
+        uiagent_client.swipe(ui.adb, 540, 1188, 750, 1188, 300)
+
+        logger.info("按下快門（套用色彩/亮度調整）...")
+        ui.click_then_disappear("B_拍照鍵", "B_模式通用")
+        ui.wait_exists("B_模式通用", timeout_ms=SAVE_TIMEOUT)
+    finally:
+        logger.info("重設色彩和亮度調整...")
+        ui.wait_then_click("B_關閉色彩亮度調整", raise_on_fail=False)
+
+
 def test_photo_settings(context) -> bool:
     """測試拍照設定是否存在"""
     # 所有設定選項清單
@@ -704,6 +789,7 @@ def test_photo_settings(context) -> bool:
         ("物件追蹤", "S_物件追蹤"),
         ("自動拍攝", "S_自動拍攝"),
         ("失真校正", "S_失真校正"),
+        *GENERAL_SETTINGS_CHECK,
     ]
     return test_settings_base(
         context, mode="main", param="photo", settings_check=settings_check
@@ -720,9 +806,25 @@ def test_video_settings(context) -> bool:
         ("自動拍攝", "S_自動拍攝(影片)"),
         ("SteadyShot™", "S_SteadyShot™"),
         ("檔案格式(4K)", "S_檔案格式(4K)"),
+        *GENERAL_SETTINGS_CHECK,
     ]
     return test_settings_base(
         context, mode="main", param="video", settings_check=settings_check
+    )
+
+
+def test_manual_settings(context) -> bool:
+    """測試手動模式設定是否存在"""
+    settings_check = [
+        ("靜態影像尺寸", "S_靜態影像尺寸"),
+        ("觸碰即可調整", "S_觸碰即可調整"),
+        ("測光", "S_測光"),
+        ("自動拍攝", "S_自動拍攝"),
+        ("失真校正", "S_失真校正"),
+        *GENERAL_SETTINGS_CHECK,
+    ]
+    return test_settings_base(
+        context, mode="manual", param="manual", settings_check=settings_check
     )
 
 
@@ -803,8 +905,17 @@ def to_slow(ui):
     ui.click_then_appear("O_模式_慢動作", "B_返回拍照")
 
 
+def to_manual(ui):
+    ui.click_then_appear("B_模式選單", "O_模式_手動")
+    ui.click_then_appear("O_模式_手動", "B_返回拍照")
+
+
 def to_main(ui):
     ui.click_then_appear("B_返回拍照", "B_模式選單")
+
+
+def noop_switch(ui, param):
+    """已經在目標子模式，不需要任何操作（僅在重試迴圈邊界情況觸發）"""
 
 
 def main_switch(ui, video_mode):
@@ -834,6 +945,8 @@ TRANSITIONS = {
     # --- 跨 mode ---
     ("main", "slow"): to_slow,
     ("slow", "main"): to_main,
+    ("main", "manual"): to_manual,
+    ("manual", "main"): to_main,
     # --- main 內 ---
     ("main", "video"): main_switch,
     ("main", "photo"): main_switch,
@@ -841,6 +954,8 @@ TRANSITIONS = {
     ("slow", "960"): slow_switch,
     ("slow", "120"): slow_switch,
     ("slow", "single"): slow_switch,
+    # --- manual 內（只有一個子模式，重試迴圈邊界情況用） ---
+    ("manual", "manual"): noop_switch,
 }
 
 
@@ -964,29 +1079,6 @@ def wait_ready(context: TestContext, timeout_ms=LL_TIMEOUT) -> None:
     raise SystemExit(1)
 
 
-# ------------------------------------------------------------
-# 未整理的函式
-# ------------------------------------------------------------
-
-
-# def test_t(click_map) -> bool:
-#     """色彩與亮度滑動測試"""
-#     wait_then_click(click_map["色彩和亮度"])
-
-#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-#     wait_then_click(click_map["關閉色彩和亮度調整"])
-
-#     wait_then_click(click_map["色彩和亮度"])
-
-#     print(f"Swipe: {swipe(540, 1214, 215, 1214)}")
-#     print(f"Swipe: {swipe(540, 1365, 215, 1365)}")
-
-#     return True
-# ------------------------------------------------------------
-
-
 def prepare_device(context: TestContext) -> None:
     context.adb.shell("input keyevent KEYCODE_WAKEUP", check=True)  # 喚醒裝置
     context.adb.shell("wm dismiss-keyguard", check=True)  # 解鎖裝置
@@ -1073,6 +1165,34 @@ TESTS = [
         name="超級慢動作",
         check_saved=True,
         alias="s960",
+    ),
+    TestCase(
+        key="manual",
+        func=test_manual,
+        name="手動",
+        check_saved=True,
+        alias="m",
+    ),
+    TestCase(
+        key="manual_settings",
+        func=test_manual_settings,
+        name="手動設定選項",
+        check_saved=False,
+        alias="mst",
+    ),
+    TestCase(
+        key="front_camera",
+        func=test_front_camera,
+        name="前鏡頭拍照",
+        check_saved=True,
+        alias="fc",
+    ),
+    TestCase(
+        key="color_brightness",
+        func=test_color_brightness,
+        name="色彩和亮度調整",
+        check_saved=True,
+        alias="cb",
     ),
 ]
 VIDEO_MODES = {
