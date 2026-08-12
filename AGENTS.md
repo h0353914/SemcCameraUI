@@ -16,6 +16,7 @@
 不同模組的詳細規範請參考：
 - **[Java 專案規範](AGENTS_java.md)** — Web 應用、Gradle 構建、APK 簽名
 - **[SO 模組規範](AGENTS_so.md)** — Native 開發、反編譯實作、Ghidra 分析
+- **[編譯專用設定](AGENTS_build.md)** — ccache / TARGET_RELEASE 等編譯環境變數設定
 
 ---
 
