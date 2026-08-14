@@ -9,7 +9,7 @@ sys.path.insert(0, str(ROOT))
 from tools_Common.parse_args import parse_args  # noqa: E402
 from tools_Common.apk_workflow import run_apk_workflow  # noqa: E402
 
-MODULE_NAME = "SemcCameraUI-xxhdpi"
+MODULE_NAME = "SemcCameraUI"
 OUTPUT_NAME = "SemcCameraUI-xxhdpi-release"
 PACKAGE_NAME = "com.sonyericsson.android.camera"
 

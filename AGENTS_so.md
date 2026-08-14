@@ -1,6 +1,6 @@
 # AGENTS_so.md
 
-Native SO 模組開發規範。適用於 `Libcacao/` 和所有 .so 相關開發。
+Native SO 模組開發規範。適用於 `camera/cacao/`（`camera` submodule 內）和所有 .so 相關開發。
 
 ---
 
@@ -12,10 +12,10 @@ Native SO 模組開發規範。適用於 `Libcacao/` 和所有 .so 相關開發�
 
 # 1. 專案結構
 
-Native SO 相關主要位於 `Libcacao/` 與 `tools_Libcacao/`：
+Native SO 相關主要位於 `camera/cacao/`（`camera` submodule 內）與 `tools_Libcacao/`：
 
 ```
-Libcacao/
+camera/cacao/
  ├─ Android.bp
  ├─ libcacao_client/
  │  ├─ Android.bp

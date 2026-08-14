@@ -1,6 +1,6 @@
 # 編譯專用設定
 
-LineageOS / AOSP 編譯（`m` / `mm` / `mma`）前必須設定的環境變數。適用於 `Libcacao/` 等 Native 編譯（`tools_Libcacao/build_push_libcacao.py`）。
+LineageOS / AOSP 編譯（`m` / `mm` / `mma`）前必須設定的環境變數。適用於 `camera/cacao/` 等 Native 編譯（`tools_Libcacao/build_push_libcacao.py`）。
 
 ---
 

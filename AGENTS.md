@@ -54,9 +54,11 @@ SemcCameraUI/
  ├─ tools_Libcacao/
  │  ├─ build_push_libcacao.py  # Libcacao編譯腳本 
  │  └─ refs/                   # 原版so         
- ├─ App_java/                  # Java 應用層
- ├─ App_smali/                 # Smali 反編譯應用
- └─ Libcacao/                  # Native SO 模組
+ ├─ camera/                    # android_vendor_sony_camera submodule（a15 rebuild 用）
+ │  ├─ apps/                   # Java 應用層（CameraPanorama、SemcCameraUI 從原始碼建置）
+ │  ├─ cacao/                  # Native SO 模組（libcacao，a15 rebuild 用）
+ │  └─ proprietary/            # 未逆向的原廠 blob（priv-app APK、permission xml 等）
+ └─ App_smali/                 # Smali 反編譯應用（a9 專用）
 ```
 
 ---

@@ -42,7 +42,7 @@ def run_apk_workflow(
 ) -> None:
     output_apk = REPO_OUT_PRIV_APP_DIR / output_name / f"{output_name}.apk"
 
-    base_dir = "App_java" if build_kind == "java" else "App_smali"
+    base_dir = "camera/apps" if build_kind == "java" else "App_smali"
     source_dir = REPO_ROOT / base_dir / module_name
 
     if args.build:

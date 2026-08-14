@@ -132,7 +132,7 @@ def build_cmake(libcacao_root: Path, sysroot_path: Path):
     使用 CMake + NDK 編譯所有模組
     CMakeLists.txt now lives in tools_Libcacao/
     """
-    tools_root = libcacao_root.parent / "tools_Libcacao"
+    tools_root = SEMCCAMERA_ROOT / "tools_Libcacao"
     build_root = libcacao_root / "build"
 
     # 清除舊的構建目錄
@@ -298,14 +298,14 @@ def main() -> int:
     )
     adb = Adb(serial=args.device)
 
-    libcacao_root = SEMCCAMERA_ROOT / "Libcacao"
+    libcacao_root = SEMCCAMERA_ROOT / "camera" / "cacao"
     tools_root = SEMCCAMERA_ROOT / "tools_Libcacao"
     out_root = SEMCCAMERA_ROOT / "out"
     sysroot_path = tools_root / "sysroot"
 
     # 檢查必要目錄
     if not libcacao_root.exists():
-        raise SystemExit(f"[ERR] 找不到 Libcacao 目錄: {libcacao_root}")
+        raise SystemExit(f"[ERR] 找不到 libcacao 目錄: {libcacao_root}")
 
     if not sysroot_path.exists():
         raise SystemExit(

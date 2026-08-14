@@ -55,17 +55,17 @@ endif()
 
 set(PRODUCT_OUT "${LINEAGE_ROOT}/out/target/product/${PRODUCT_NAME}")
 set(TOOLS_LIBCACAO_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-set(LIBCACAO_SRC "${TOOLS_LIBCACAO_DIR}/../Libcacao")
+set(LIBCACAO_SRC "${TOOLS_LIBCACAO_DIR}/../camera/cacao")
 set(REPO_ROOT "${LIBCACAO_SRC}")  # 相容性：保持與原始 CMakeLists.txt 相同的引用
 
 # ABI 相關路徑
 # 連結庫使用 refs/so_64 / refs/so_32（Android 9 原版 .so），確保與設備 ABI 相容
 # （PRODUCT_OUT 含 Android 14 libs，符號簽名不同，不可用於連結目標）
 if(ANDROID_ABI STREQUAL "arm64-v8a")
-    set(SYSTEM_LIB    "${REPO_ROOT}/../tools_Libcacao/refs/so_64")
+    set(SYSTEM_LIB    "${TOOLS_LIBCACAO_DIR}/refs/so_64")
     set(PREBUILTS_LIB "${LIBCACAO_SRC}/prebuilts/lib64")
 else()
-    set(SYSTEM_LIB    "${REPO_ROOT}/../tools_Libcacao/refs/so_32")
+    set(SYSTEM_LIB    "${TOOLS_LIBCACAO_DIR}/refs/so_32")
     set(PREBUILTS_LIB "${LIBCACAO_SRC}/prebuilts/lib")
 endif()
 
@@ -76,7 +76,7 @@ endif()
 #   其餘所有標頭      → LINEAGE_ROOT (/home/h/lineageos/)
 #   HIDL C++ 標頭    → LINEAGE_ROOT out/soong/.intermediates/
 # ══════════════════════════════════════════════════════════
-set(_L16 "${REPO_ROOT}/../tools_Libcacao/sysroot")
+set(_L16 "${TOOLS_LIBCACAO_DIR}/sysroot")
 if(NOT EXISTS "${_L16}/system/libhidl_l16/transport/token/1.0/utils/include")
     message(FATAL_ERROR
         "[libcacao] 找不到 lineage-16.0 HybridInterface 標頭: ${_L16}/system/libhidl_l16/transport/token/1.0/utils/include\n"
@@ -287,7 +287,7 @@ add_vendor_hidl_lib(somc_provider_1_0 "vendor.somc.hardware.camera.provider@1.0"
 # Android 14 LINEAGE_ROOT 標頭在 Return<T>::operator T() 中呼叫此函數
 # 但 Android 9 的 libhidlbase.so 沒有此符號，需 weak symbol 填補
 add_library(hidl_compat STATIC
-    "${REPO_ROOT}/../tools_Libcacao/sysroot/hidl_compat.cpp"
+    "${TOOLS_LIBCACAO_DIR}/sysroot/hidl_compat.cpp"
 )
 
 # ══════════════════════════════════════════════════════════
