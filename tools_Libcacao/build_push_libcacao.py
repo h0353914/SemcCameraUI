@@ -13,8 +13,8 @@ from tools_Common.push_common import copy_compiled_file, push_lib_list  # noqa: 
 from tools_Common.adb import Adb  # noqa: E402
 
 LINEAGE_ROOT = Path.home() / "lineageos"
-LUNCH_TARGET = "lineage_poplar_kddi-ap2a-userdebug"
-PRODUCT_NAME = "poplar_kddi"
+LUNCH_TARGET = "lineage_poplar-bp1a-userdebug"
+PRODUCT_NAME = "poplar"
 
 # ── Soong 模組名稱（不含 .so） ──
 SOONG_MODULES = [
@@ -45,6 +45,7 @@ def push_staged_libs(adb: Adb, out_root: Path) -> None:
                 lib_names,
                 arch=arch,
                 local_paths=libs,
+                remote_dir=f"/system/{arch}",
                 adb=adb,
             )
         except Exception as exc:
@@ -55,6 +56,8 @@ def build(paths):
     modules = " ".join(SOONG_MODULES).strip()
     cmd = f"""
         set -e
+        export CCACHE_EXEC=/usr/bin/ccache
+        export USE_CCACHE=1
         source build/envsetup.sh
         lunch {LUNCH_TARGET}
         m {modules}
