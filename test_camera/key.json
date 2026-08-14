@@ -140,5 +140,60 @@
   "O_模式_慢動作": {
     "rid": "com.sonyericsson.android.camera:id/selector_app_name_label",
     "text": "慢動作"
+  },
+  "O_模式_手動": {
+    "rid": "com.sonyericsson.android.camera:id/selector_app_name_label",
+    "text": "手動"
+  },
+  "STATE_手動模式": {
+    "rid": "com.sonyericsson.android.camera:id/tab_container"
+  },
+  "S_觸碰即可調整": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "觸碰即可調整"
+  },
+  "S_測光": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "測光"
+  },
+  "S_儲存地點": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "儲存地點"
+  },
+  "S_觸控拍攝": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "觸控拍攝"
+  },
+  "S_格狀線條": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "格狀線條"
+  },
+  "S_自動相片預覽": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "自動相片預覽"
+  },
+  "S_使用相機鍵連拍": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "使用相機鍵連拍"
+  },
+  "S_設定音量鍵的其他功能": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "設定音量鍵的其他功能"
+  },
+  "S_資料儲存": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "資料儲存"
+  },
+  "S_使用相機鍵啟動": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "使用相機鍵啟動"
+  },
+  "S_說明": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "說明"
+  },
+  "S_重設設定": {
+    "rid": "com.sonyericsson.android.camera:id/text",
+    "text": "重設設定"
   }
 }

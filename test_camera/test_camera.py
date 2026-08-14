@@ -695,6 +695,21 @@ def test_video(context) -> None:
     ui.click_then_appear("B_停止錄影", "B_錄影鍵", timeout_ms=SAVE_TIMEOUT)
 
 
+# 「一般設定」區塊，拍照/錄影/手動模式共用
+GENERAL_SETTINGS_CHECK = [
+    ("儲存地點", "S_儲存地點"),
+    ("觸控拍攝", "S_觸控拍攝"),
+    ("格狀線條", "S_格狀線條"),
+    ("自動相片預覽", "S_自動相片預覽"),
+    ("使用相機鍵連拍", "S_使用相機鍵連拍"),
+    ("設定音量鍵的其他功能", "S_設定音量鍵的其他功能"),
+    ("資料儲存", "S_資料儲存"),
+    ("使用相機鍵啟動", "S_使用相機鍵啟動"),
+    ("說明", "S_說明"),
+    ("重設設定", "S_重設設定"),
+]
+
+
 def test_photo_settings(context) -> bool:
     """測試拍照設定是否存在"""
     # 所有設定選項清單
@@ -704,6 +719,7 @@ def test_photo_settings(context) -> bool:
         ("物件追蹤", "S_物件追蹤"),
         ("自動拍攝", "S_自動拍攝"),
         ("失真校正", "S_失真校正"),
+        *GENERAL_SETTINGS_CHECK,
     ]
     return test_settings_base(
         context, mode="main", param="photo", settings_check=settings_check
@@ -720,6 +736,7 @@ def test_video_settings(context) -> bool:
         ("自動拍攝", "S_自動拍攝(影片)"),
         ("SteadyShot™", "S_SteadyShot™"),
         ("檔案格式(4K)", "S_檔案格式(4K)"),
+        *GENERAL_SETTINGS_CHECK,
     ]
     return test_settings_base(
         context, mode="main", param="video", settings_check=settings_check
@@ -1189,7 +1206,8 @@ def run_camera_test_flow(
             n = 1  # 重置重試次數
             continue
         else:
-            if args.retreat and idx > 0 and not retreated:  # 如果不是第一個測試，且還沒回退過，就退到前一個測試
+            # 如果啟動退回模式，並且不是第一個測試，並且沒回退過，就退到前一個測試
+            if args.retreat and idx > 0 and not retreated:
                 idx = idx - 1  # 回退到前一個測試項目
                 mode = test_list[idx]
                 retreated = True  # 標記已回退
