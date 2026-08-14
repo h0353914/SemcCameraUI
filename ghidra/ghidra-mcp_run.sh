@@ -7,7 +7,7 @@ for i in 8091 8092 8093 8094; do
   docker run -d \
     --name ghidra-mcp-$i \
     -p 127.0.0.1:$i:$i \
-    -v /home/h/lineageos/device/sony/SemcCameraUI:/projects \
+    -v /home/h/tmp/SemcCameraUI:/projects \
     -v ghidra_data_$i:/data \
     -e GHIDRA_MCP_PORT=$i \
     -e GHIDRA_MCP_AUTH_TOKEN=abc123456 \
