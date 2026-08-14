@@ -29,3 +29,6 @@
 [submodule "camera"]
 	path = camera
 	url = https://github.com/h0353914/android_vendor_sony_camera
+[submodule "patches"]
+	path = patches
+	url = /home/h/tmp/SemcCameraUI/patches
