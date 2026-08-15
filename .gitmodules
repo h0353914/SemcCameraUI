@@ -17,6 +17,10 @@
 [submodule "App_smali/Auxiliary"]
 	path = App_smali/Auxiliary
 	url = https://github.com/h0353914/Auxiliary
+[submodule "App_smali/app-scan3d"]
+	path = App_smali/app-scan3d
+	url = https://github.com/h0353914/app-scan3d
+
 
 [submodule "sony_camera_magsik"]
 	path = sony_camera_magsik
