@@ -27,9 +27,7 @@ print(f"輸出資料夾: {folder_path}")
 print(f"處理 APK: {apk_file}")
 
 # apktool 路徑
-apktool_path = os.path.join(
-    os.path.dirname(__file__), "..", "tools_Common", "apktool.jar"
-)
+apktool_path = os.path.join(os.path.dirname(__file__), "apktool.jar")
 
 # 執行 apktool
 apktool_cmd = [
