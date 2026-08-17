@@ -8,7 +8,7 @@ import subprocess
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
 ANDROID_TOP = Path("/home/h/lineageos")
-APKTOOL_JAR = REPO_ROOT / "tools_Common" / "apktool.jar"
+APKTOOL_JAR = REPO_ROOT / "tools_App_smali" / "apktool.jar"
 DEFAULT_JAVA_CMD = str(ANDROID_TOP / "prebuilts/jdk/jdk11/linux-x86/bin/java")
 
 

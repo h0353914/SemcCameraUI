@@ -1071,13 +1071,6 @@ TESTS = [
         alias="vst",
     ),
     TestCase(
-        key="slow_120",
-        func=test_slow_120,
-        name="慢動作",
-        check_saved=True,
-        alias="s120",
-    ),
-    TestCase(
         key="slow_single",
         func=test_slow_single,
         name="超級慢動作(單拍)",
@@ -1090,6 +1083,13 @@ TESTS = [
         name="超級慢動作",
         check_saved=True,
         alias="s960",
+    ),
+    TestCase(
+        key="slow_120",
+        func=test_slow_120,
+        name="慢動作",
+        check_saved=True,
+        alias="s120",
     ),
 ]
 VIDEO_MODES = {
