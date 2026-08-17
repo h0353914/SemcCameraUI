@@ -158,8 +158,11 @@ include_directories(
     ${_SOONG_INT}/hardware/interfaces/graphics/common/1.0/android.hardware.graphics.common@1.0_genc++_headers/gen
     ${_SOONG_INT}/hardware/interfaces/graphics/common/1.1/android.hardware.graphics.common@1.1_genc++_headers/gen
     # camera common, provider
+    # provider@2.4 的生成標頭本身 #include device@1.0 / device@3.2，必須一併加入
     ${_SOONG_INT}/hardware/interfaces/camera/common/1.0/android.hardware.camera.common@1.0_genc++_headers/gen
     ${_SOONG_INT}/hardware/interfaces/camera/provider/2.4/android.hardware.camera.provider@2.4_genc++_headers/gen
+    ${_SOONG_INT}/hardware/interfaces/camera/device/1.0/android.hardware.camera.device@1.0_genc++_headers/gen
+    ${_SOONG_INT}/hardware/interfaces/camera/device/3.2/android.hardware.camera.device@3.2_genc++_headers/gen
     # hidl base, manager
     ${_SOONG_INT}/system/libhidl/transport/base/1.0/android.hidl.base@1.0_genc++_headers/gen
     ${_SOONG_INT}/system/libhidl/transport/manager/1.0/android.hidl.manager@1.0_genc++_headers/gen
@@ -326,6 +329,7 @@ if(ANDROID_ABI STREQUAL "armeabi-v7a")
         hidl_base_1_0
         hidl_manager_1_0
         hw_camera_common_1_0
+        hw_camera_provider_2_4
         hw_graphics_alloc_2_0
         libhidlbase
         libhidltransport
