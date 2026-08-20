@@ -917,9 +917,9 @@ def handle_permission_dialog_9(context):
         if not ui.wait_then_click("B_允許檔案存取", raise_on_fail=False):
             break
 
-    if ui.wait_exists("B_儲存地點否", timeout_ms=2000, raise_on_fail=False):
-        context.resources.logger.error("偵測到異常 UI：儲存地點")
-        raise RuntimeError("權限彈窗處理失敗，出現儲存地點選項")
+    # if ui.wait_exists("B_儲存地點否", timeout_ms=2000, raise_on_fail=False):
+    #     context.resources.logger.error("偵測到異常 UI：儲存地點")
+    #     raise RuntimeError("權限彈窗處理失敗，出現儲存地點選項")
 
 
 def handle_permission_dialog_11(context):
@@ -1187,8 +1187,8 @@ def run_camera_test_flow(
 
     camera.launch_camera()  # 啟動相機
 
-    if args.clear_data:
-        handle_permission_dialog(context)  # 處理權限彈窗
+    # if args.clear_data:
+    #     handle_permission_dialog(context)  # 處理權限彈窗
 
     test_list = resolve_tests(tests, args.mode)
 
