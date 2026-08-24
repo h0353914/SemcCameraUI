@@ -58,7 +58,27 @@ make bacon -j10
 * 全系統打包（生成 `bacon` OTA/rom 包）必須用 `make bacon`，不是單純的 `m`。
 * `-j10` 為既定平行編譯數，不要自行更改。
 
-# 4. 檢查方式
+# 4. 編譯輸出要檢查有沒有出現 `->`：代表指令下錯了
+
+`m` / `mm` 開頭如果印出類似這樣的東西：
+
+```
+[100% 1/1] bootstrap blueprint
+environment variables changed value:
+   CC_WRAPPER ("" -> "/usr/bin/ccache")
+   TARGET_RELEASE ("ap4a" -> "bp1a")
+   USE_CCACHE ("" -> "1")
+```
+
+`"舊值" -> "新值"` 這個箭頭格式，代表 Soong 偵測到跟**上一次呼叫**用的環境變數/`lunch` 設定不一樣（例如 `TARGET_RELEASE` 這次是 `bp1a`、上次卻是 `ap4a`），於是整個 `out/soong` 判定快取失效，觸發全樹重新分析（`soong_build` 會吃到滿記憶體、跑上好幾分鐘，不是單純重編那一兩個模組而已）。
+
+**看到這個輸出就代表這次或上一次的指令下錯了**，通常是：
+- `lunch` 打的不是 3.1 節那個 `lineage_poplar-bp1a-userdebug`（release 打成別的，例如 `ap4a`）
+- 忘記在 `source build/envsetup.sh && lunch ...` 之前就 export 好 `CCACHE_EXEC=/usr/bin/ccache` 跟 `USE_CCACHE=1`
+
+看到就要停下來，照第 3.1 節的指令重下一次，不要讓它在錯的設定上繼續編下去（編出來的產物設定也會是錯的）。
+
+# 5. 檢查方式
 
 編譯開始後可用以下指令確認 ccache 是否生效（cache hit 應隨編譯次數增加）：
 
