@@ -499,3 +499,59 @@ target_link_libraries(libimageprocessorjni PRIVATE
 set_target_properties(libimageprocessorjni PROPERTIES
     OUTPUT_NAME "imageprocessorjni"
 )
+
+# ══════════════════════════════════════════════════════════
+# 5. libsomc_chokoballpal（armeabi-v7a 32-bit only）
+#
+# 從原廠 vendor/lib/libsomc_chokoballpal.so 重建。把 cammw_util 的
+# shared-memory buffer 包成 android::GraphicBuffer 交給上層。
+#
+# 注意事項：
+#   * 一定要 --pack-dyn-relocs=none。Android 9 的 linker 不認得 DT_RELR
+#     （Android 11 才加入），會印 "unused DT entry: unknown (type 0x24 ...)"
+#     然後整批相對重定位不套用，vtable/GOT 是垃圾，一進 CkbService thread
+#     就 SIGSEGV。實機踩過。
+#   * cammw_util_shmem_* 由 libcammw.so 提供（A9 原廠的 libcammw.so 直接
+#     匯出這組符號），DT_NEEDED 與原版一致。
+#   * -fno-rtti：原版 vtable 的 typeinfo slot 是 0。
+# ══════════════════════════════════════════════════════════
+if(ANDROID_ABI STREQUAL "armeabi-v7a")
+    add_system_lib(libcammw)
+
+    add_library(libsomc_chokoballpal SHARED
+        ${REPO_ROOT}/libsomc_chokoballpal/src/ckb_pal_buf.cpp
+    )
+
+    target_include_directories(libsomc_chokoballpal PRIVATE
+        ${REPO_ROOT}/libsomc_chokoballpal/include
+    )
+
+    # -fno-exceptions / -fno-unwind-tables：原版是把 libunwind_llvm 靜態連進去
+    # 才有 _Unwind_Resume / __aeabi_unwind_cpp_pr0/1，A9 的 libc++.so 與 libc.so
+    # 都不提供這些符號。我們不靜態連 libunwind，就得把 unwinding 需求拿掉，
+    # 否則載入時解析不到。（libcacao_process_ctrl_gateway 也是同樣處理）
+    target_compile_options(libsomc_chokoballpal PRIVATE
+        -Os
+        -fno-rtti
+        -fno-exceptions
+        -fno-unwind-tables
+        -fno-asynchronous-unwind-tables
+        -fno-lto
+        -mfpu=vfpv3-d16
+    )
+
+    target_link_libraries(libsomc_chokoballpal PRIVATE
+        -Wl,--pack-dyn-relocs=none
+        -Wl,--allow-shlib-undefined
+        libcxx_shared
+        libui
+        libutils
+        log
+        libcammw
+    )
+
+    # CMake 會自動加 lib 前綴，改回原版檔名／SONAME
+    set_target_properties(libsomc_chokoballpal PROPERTIES
+        OUTPUT_NAME "somc_chokoballpal"
+    )
+endif()
