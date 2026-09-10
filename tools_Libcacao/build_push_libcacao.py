@@ -13,8 +13,8 @@ from tools_Common.push_common import copy_compiled_file, push_lib_list  # noqa: 
 from tools_Common.adb import Adb  # noqa: E402
 
 LINEAGE_ROOT = Path.home() / "lineageos"
-LUNCH_TARGET = "lineage_poplar-bp1a-userdebug"
-PRODUCT_NAME = "poplar"
+LUNCH_TARGET = "lineage_poplardcm-bp1a-userdebug"
+PRODUCT_NAME = "poplardcm"
 
 # ── Soong 模組名稱（不含 .so） ──
 SOONG_MODULES = [

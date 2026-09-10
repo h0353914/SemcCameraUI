@@ -1187,8 +1187,8 @@ def run_camera_test_flow(
 
     camera.launch_camera()  # 啟動相機
 
-    # if args.clear_data:
-    #     handle_permission_dialog(context)  # 處理權限彈窗
+    if args.clear_data:
+        handle_permission_dialog(context)  # 處理權限彈窗
 
     test_list = resolve_tests(tests, args.mode)
 

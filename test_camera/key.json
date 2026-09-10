@@ -29,13 +29,13 @@
     "text": "確定"
   },
   "B_使用期間允許": {
-    "rid": "com.android.packageinstaller:id/permission_allow_foreground_only_button"
+    "rid": "com.android.permissioncontroller:id/permission_allow_foreground_only_button"
   },
   "B_允許檔案存取": {
-    "rid": "com.android.packageinstaller:id/permission_allow_button"
+    "rid": "com.android.permissioncontroller:id/permission_allow_button"
   },
   "B_全部允許": {
-    "rid": "com.android.packageinstaller:id/permission_allow_always_button"
+    "rid": "com.android.permissioncontroller:id/permission_allow_always_button"
   },
   "B_返回拍照": {
     "rid": "com.sonyericsson.android.camera:id/mode_button_shortcut",
